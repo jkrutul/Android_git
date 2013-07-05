@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/file_name" />
+
+    <EditText
+        android:id="@+id/file_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/hint_enter_filename" />
+
+    <EditText
+        android:id="@+id/file_content"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/hint_enter_file_content" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal" >
+
+        <Button
+            android:id="@+id/button_save"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:onClick="saveToFile"
+            android:text="@string/saveToFile" />
+
+        <Button
+            android:id="@+id/button_open"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:onClick="openFile"
+            android:text="@string/open_file" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal" >
+
+        <Button
+            android:id="@+id/delete_file"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:onClick="deleteFile"
+            android:text="@string/delete_file" />
+
+        <Button
+            android:id="@+id/find_file"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:onClick="findFile"
+            android:text="@string/find_file" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/storage_detail"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/storage_detail" />
+
+</LinearLayout>

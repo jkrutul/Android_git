@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:padding="16dp" >
+
+    <EditText
+        android:id="@+id/edit_message"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/edit_message" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/edit_message"
+        android:gravity="center"
+        android:orientation="vertical" >
+
+        <Button
+            android:id="@+id/finish_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="finishApp"
+            android:text="@string/button_finish" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="articles"
+            android:text="@string/button_gotoArticles" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="saveMessageToFile"
+            android:text="@string/button_gotoStorages" />
+
+        <Button
+            android:id="@+id/send_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="sendMessage"
+            android:text="@string/button_send" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="database"
+            android:text="goto DAtabase" />
+    </LinearLayout>
+
+</RelativeLayout>

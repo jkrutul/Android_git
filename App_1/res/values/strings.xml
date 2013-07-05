@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">App_1</string>
+    <string name="action_settings">Settings</string>
+    <string name="hello_world">Hello world!</string>
+    
+    <!-- TEXT VIEWS -->
+	<string name="file_name">File name:</string>
+	<string name="storage_detail">Storage detail:</string>
+	
+	<!-- HINTS -->
+	<string name="hint_enter_filename">enter filename</string>
+	<string name="edit_message">enter a message</string>
+	<string name="hint_enter_file_content">enter file content</string>
+	
+    <!-- TITLES -->
+    <string name="title_activity_fragments">Article_HeadlineActivity</string>
+    <string name="title_activity_main">MainActivity</string>
+    <string name="title_activity_display_message">My Message</string>
+    <string name="title_activity_storage">Storage details</string>
+    <string name="title_activity_database">Database Activity</string>
+
+    <!-- BUTTONS -->
+    <string name="button_send">Send</string>
+    <string name="button_finish">finish()</string>
+    <string name="button_gotoArticles">view articles</string>
+    <string name="button_gotoStorages">Save message to file</string>
+    <string name="open_file">otwórz plik</string>
+    <string name="saveToFile">zapisz do pliku</string>
+    <string name="delete_file">usuń plik</string>
+    <string name="find_file">znajdź plik</string>
+
+
+    <!-- PREFERENCES -->
+    <string name="pref1">shared_pref1</string>
+
+    <!-- KEYS -->
+    <string name="saved_message">saved_message</string>
+
+    <!-- DEFAULT VALUES -->
+    <string name="saved_message_default"></string>
+
+</resources>
