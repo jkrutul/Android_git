@@ -20,6 +20,7 @@
     <string name="title_activity_display_message">My Message</string>
     <string name="title_activity_storage">Storage details</string>
     <string name="title_activity_database">Database Activity</string>
+    <string name="send_to">Share text to...</string>
 
     <!-- BUTTONS -->
     <string name="button_send">Send</string>

@@ -57,6 +57,7 @@ public class DatabaseActivity extends Activity{
 	@Override
 	public void onDestroy(){
 		// Close the database
+		super.onDestroy();
 		myDBAdapter.close();
 	}
 	

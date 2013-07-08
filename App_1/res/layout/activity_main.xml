@@ -1,54 +1,94 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    android:padding="16dp" >
+    android:layout_height="wrap_content" >
 
-    <EditText
-        android:id="@+id/edit_message"
+    <RelativeLayout
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:hint="@string/edit_message" />
+        android:layout_height="fill_parent"
+        android:padding="16dp" >
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/edit_message"
-        android:gravity="center"
-        android:orientation="vertical" >
-
-        <Button
-            android:id="@+id/finish_button"
-            android:layout_width="wrap_content"
+        <EditText
+            android:id="@+id/edit_message"
+            android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:onClick="finishApp"
-            android:text="@string/button_finish" />
+            android:hint="@string/edit_message" />
 
-        <Button
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:onClick="articles"
-            android:text="@string/button_gotoArticles" />
+            android:layout_below="@id/edit_message"
+            android:gravity="center"
+            android:orientation="vertical" >
 
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:onClick="saveMessageToFile"
-            android:text="@string/button_gotoStorages" />
+            <Button
+                android:id="@+id/finish_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:onClick="finishApp"
+                android:text="@string/button_finish" />
 
-        <Button
-            android:id="@+id/send_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:onClick="sendMessage"
-            android:text="@string/button_send" />
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:onClick="articles"
+                android:text="@string/button_gotoArticles" />
 
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:onClick="database"
-            android:text="goto DAtabase" />
-    </LinearLayout>
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:onClick="saveMessageToFile"
+                android:text="@string/button_gotoStorages" />
 
-</RelativeLayout>
+            <Button
+                android:id="@+id/send_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:onClick="sendMessage"
+                android:text="@string/button_send" />
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:onClick="database"
+                android:text="goto DAtabase" />
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:onClick="startMapActivity"
+                android:text="startMapActivity" />
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:onClick="shareIntent"
+                android:text="share" />
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:onClick="callActivity"
+                android:text="zadzwon do mamy" />
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:onClick="createCalendarEvent"
+                android:text="kalendarz" />
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:onClick="pickContact"
+                android:text="wybierz kontakt" />
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:onClick="startTTSActivity"
+                android:text="TTS" />
+        </LinearLayout>
+    </RelativeLayout>
+
+</ScrollView>
