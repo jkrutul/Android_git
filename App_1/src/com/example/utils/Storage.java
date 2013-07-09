@@ -5,14 +5,16 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Environment;
 import android.util.Log;
-
-import com.example.utils.FeedReaderContract.FeedEntry.FeedReaderDbHelper;
 
 public class Storage {
 
@@ -126,6 +128,35 @@ public class Storage {
 		return file;
 	}
 
+	public static File createImageFile(){
+		
+		String JPEG_FILE_PREFIX = "img";
+		String JPEG_FILE_SUFIX= ".jpg";
+		// create an image file name
+		String timeStamp = new SimpleDateFormat("yyyyyMMdd_HHmmss").format(new Date());
+		String imageFileName = JPEG_FILE_PREFIX + timeStamp+"_";
+		try {
+			File image = File.createTempFile(imageFileName, JPEG_FILE_SUFIX, getAlbumDir());
+			//mCurrentPhotoPath = image.getAbsolutePath();
+			return image;
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+	public static void galleryAddPic(Activity a, String path){
+		Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+		File f = new File(path);
+		Uri contentUri = Uri.fromFile(f);
+		mediaScanIntent.setData(contentUri);
+		a.sendBroadcast(mediaScanIntent);
+	}
+	
+	public static File getAlbumDir(){
+		return new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),"");
+	}
+	
 	public static boolean deleteExtFile(String filename, Context context) {
 		if (isExternalSotrageReadable()) {
 			File file = getExternalStorageDir(context, filename);
