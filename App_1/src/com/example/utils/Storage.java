@@ -13,10 +13,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import android.util.Log;
 
 public class Storage {
+    public static final int IO_BUFFER_SIZE = 8 * 1024;
 
 	/* INTERNAL ------------------------------------------------------------------------------------------------------*/
 	/**
@@ -100,13 +102,12 @@ public class Storage {
 
 	private static boolean isExternalSotrageReadable() {
 		String state = Environment.getExternalStorageState();
-		if (Environment.MEDIA_MOUNTED.equals(state)
-				|| Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
+		if (Environment.MEDIA_MOUNTED.equals(state)	|| Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
 			return true;
 		}
 		return false;
 	}
-
+	
 	private static File getExternalStorageDir(Context context, String filename) {
 		// Get the directory for the app's private directory
 		File file = new File(context.getExternalFilesDir(null), filename);
@@ -287,6 +288,42 @@ public class Storage {
 	}
 
 	/* DATABASE ----------------------------------------------------------------------------------------------------- */
+
+	
+	/* CACHE --------------------------------------------------------------------------------------------------------*/
+    public static boolean isExternalStorageRemovable() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+            return Environment.isExternalStorageRemovable();
+        }
+        return true;
+    }
+
+    public static File getExternalCacheDir(Context context) {
+        if (hasExternalCacheDir()) {
+            return context.getExternalCacheDir();
+        }
+
+        // Before Froyo we need to construct the external cache dir ourselves
+        final String cacheDir = "/Android/data/" + context.getPackageName() + "/cache/";
+        return new File(Environment.getExternalStorageDirectory().getPath() + cacheDir);
+    }
+
+    public static boolean hasExternalCacheDir() {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.FROYO;
+    }
+	
+	// Creates a unique subdirectory of the designated app cache directory. Tries to use external
+	// but if not mounted, falls back on internal storage.
+	public static File getDiskCacheDir(Context context, String uniqueName){
+	    // Check if media is mounted or storage is built-in, if so, try and use external cache dir
+	    // otherwise use internal cache dir
+	    final String cachePath =
+	            Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState()) ||
+	                    !Environment.isExternalStorageRemovable() ? getExternalCacheDir(context).getPath() :
+	                            context.getCacheDir().getPath();
+
+	    return new File(cachePath + File.separator + uniqueName);
+	}
 
 	
 }

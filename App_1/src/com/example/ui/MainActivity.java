@@ -26,14 +26,14 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ShareActionProvider;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.app_1.R;
 import com.example.imagedownloader.ImageListActivity;
-import com.example.imageloader.ImageLoader;
 import com.example.utils.BitmapCalc;
-import com.example.utils.ImageDownloader;
 import com.example.utils.Storage;
+import com.example.imageloader.*;
 
 public class MainActivity extends Activity {
 	public final static String EXTRA_MESSAGE = "com.example.app_1.MESSAGE";
@@ -49,6 +49,7 @@ public class MainActivity extends Activity {
 
 
 	private ImageView mImageView, mImageView2;
+	private TextView tw;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -58,6 +59,21 @@ public class MainActivity extends Activity {
 		restoreMessage();
 		EditText editText = (EditText) findViewById(R.id.edit_message);
 		editText.setText(message);
+		
+		
+		// Get max available VM memory, exceeding this amount will throw an
+	    // OutOfMemory exception. Stored in kilobytes as LruCache takes an
+	    // int in its constructor.
+	    final int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
+
+		tw = (TextView) findViewById(R.id.console);
+		tw.append("max memory:"+maxMemory+"kB\n"+maxMemory/1024+"MB");
+		
+		
+		
+		
+		
+		
 		/*
 		 * AudioManager am = (AudioManager)
 		 * this.getSystemService(Context.AUDIO_SERVICE);
