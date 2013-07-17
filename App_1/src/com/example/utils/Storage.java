@@ -1,7 +1,9 @@
 package com.example.utils;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -12,6 +14,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
@@ -289,6 +292,22 @@ public class Storage {
 
 	/* DATABASE ----------------------------------------------------------------------------------------------------- */
 
+	
+	public static boolean saveToSD(Bitmap bitmap){
+		ByteArrayOutputStream  bytes= new ByteArrayOutputStream();
+		bitmap.compress(Bitmap.CompressFormat.JPEG,100,bytes);
+		File f = createImageFile();
+		FileOutputStream fo;
+		try {
+				fo = new FileOutputStream(f);
+				fo.write(bytes.toByteArray());
+				fo.close();	
+				return true;
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		return false;
+	}
 	
 	/* CACHE --------------------------------------------------------------------------------------------------------*/
     public static boolean isExternalStorageRemovable() {

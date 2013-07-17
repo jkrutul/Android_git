@@ -71,7 +71,7 @@ public class ImageLoader {
 		};
 		
 		
-		// Initialize disk cache on background thread
+		/* INITIALIZE DISK CACHE */
 	    File cacheDir = Storage.getDiskCacheDir(context, DISK_CACHE_SUBDIR);
 	    new InitDiskCacheTask().execute(cacheDir);
 
