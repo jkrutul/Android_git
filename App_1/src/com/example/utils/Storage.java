@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Scanner;
 
 import android.app.Activity;
 import android.content.Context;
@@ -147,6 +148,11 @@ public class Storage {
 			e.printStackTrace();
 		}
 		return null;
+	}
+	public static File createImageFile(String imageName){
+		
+		File image = new File(getAlbumDir(), imageName);
+		return image;
 	}
 	
 	public static void galleryAddPic(Activity a, String path){
@@ -292,22 +298,9 @@ public class Storage {
 
 	/* DATABASE ----------------------------------------------------------------------------------------------------- */
 
+
 	
-	public static boolean saveToSD(Bitmap bitmap){
-		ByteArrayOutputStream  bytes= new ByteArrayOutputStream();
-		bitmap.compress(Bitmap.CompressFormat.JPEG,100,bytes);
-		File f = createImageFile();
-		FileOutputStream fo;
-		try {
-				fo = new FileOutputStream(f);
-				fo.write(bytes.toByteArray());
-				fo.close();	
-				return true;
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		return false;
-	}
+	
 	
 	/* CACHE --------------------------------------------------------------------------------------------------------*/
     public static boolean isExternalStorageRemovable() {
@@ -342,6 +335,41 @@ public class Storage {
 	                            context.getCacheDir().getPath();
 
 	    return new File(cachePath + File.separator + uniqueName);
+	}
+	
+	
+	// functions -----------------------------------------------------------------------
+	/**
+	 * Saves bitmap to the sd card
+	 * @param bitmap
+	 * @param imageName
+	 * @return 0- save successful, -1 - not saved, 1 - aleready exist 
+	 */
+	public static int saveToSD(Bitmap bitmap,String imageName){
+		ByteArrayOutputStream  bytes= new ByteArrayOutputStream();
+		bitmap.compress(Bitmap.CompressFormat.JPEG,100,bytes);
+		if(isfileExist(imageName, getAlbumDir())!=null){
+			return 1;
+		}
+		File f = createImageFile(imageName);
+		FileOutputStream fo;
+		try {
+				fo = new FileOutputStream(f);
+				fo.write(bytes.toByteArray());
+				fo.close();	
+				return 0;
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		return -1;
+	}
+	
+	public static File isfileExist(String filename, File path){
+		File file = new File(path.getAbsoluteFile()+"/"+filename);
+		if(file.exists())
+			return file;
+		else
+			return null;
 	}
 
 	

@@ -16,16 +16,19 @@
 
 package com.example.imagedownloader;
 
+import android.app.Activity;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
-import android.widget.Toast;
 
 public class ImageAdapter extends BaseAdapter {
+	Activity actv;
+	public ImageAdapter(Activity a){
+		this.actv= a;
+	}
 
     private static final String[] URLS = {
         "http://lh5.ggpht.com/_mrb7w4gF8Ds/TCpetKSqM1I/AAAAAAAAD2c/Qef6Gsqf12Y/s144-c/_DSC4374%20copy.jpg",
@@ -80,7 +83,7 @@ public class ImageAdapter extends BaseAdapter {
         "http://lh4.ggpht.com/_7V85eCJY_fg/TBpXudG4_PI/AAAAAAAAPEE/8cHJ7G84TkM/s144-c/20100530_120257_0273-Edit-2.jpg"
     };
     
-    private final ImageDownloader imageDownloader = new ImageDownloader();
+    private final ImageDownloader imageDownloader = new ImageDownloader(actv);
     
     public int getCount() {
         return URLS.length;

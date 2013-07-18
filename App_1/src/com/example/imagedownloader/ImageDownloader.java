@@ -32,6 +32,7 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 
+import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -43,6 +44,7 @@ import android.os.Handler;
 import android.util.Log;
 import android.widget.ImageView;
 
+import com.example.utils.BitmapCalc;
 import com.example.utils.Storage;
 
 /**
@@ -58,6 +60,16 @@ import com.example.utils.Storage;
  * performance.
  */
 public class ImageDownloader {
+	Activity actv;
+	
+		
+	
+	public ImageDownloader(Activity a){
+		actv = a;
+		
+		
+	}
+	
 	private static final String LOG_TAG = "ImageDownloader";
 
 	/*
@@ -347,13 +359,30 @@ public class ImageDownloader {
 		protected Bitmap doInBackground(String... params) {
 			Bitmap b;
 			url = params[0];
-			b = downloadBitmap(url);
-			if(b!=null && Storage.saveToSD(b)){
-				Log.d("SD", url+" -save successfull");
+			String imageName = url.substring( url.lastIndexOf('/')+1, url.length() );
+			
+			if((Storage.isfileExist(imageName, Storage.getAlbumDir()))!=null){
+				File extFile = Storage.isfileExist(imageName, Storage.getAlbumDir());
+				b = BitmapFactory.decodeFile(extFile.getAbsolutePath());
+				Log.d("SD", imageName+" -already exist");
+				return b;
 			}
-			else
-				Log.e("SD", url+" -not saved successfull");
-			return b;
+			else{
+				b = downloadBitmap(url);
+				if(b!=null){
+					int saveStatus = Storage.saveToSD(b, imageName);
+					switch (saveStatus) {
+					case 0:
+						Log.d("SD", imageName+" -save successful");
+						//Storage.galleryAddPic(actv, Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)+"/"+imageName);
+						break;
+					default:
+						Log.e("SD", url+" -not saved");
+						break;
+					}
+				}
+				return b;
+			}
 		}
 
 		/**
