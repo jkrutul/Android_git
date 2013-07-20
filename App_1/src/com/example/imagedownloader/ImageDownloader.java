@@ -20,11 +20,7 @@ import java.io.File;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -32,19 +28,24 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 
-import android.app.Activity;
+import android.content.Context;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.graphics.Bitmap.CompressFormat;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.http.AndroidHttpClient;
 import android.os.AsyncTask;
-import android.os.Handler;
+import android.support.v4.util.LruCache;
 import android.util.Log;
 import android.widget.ImageView;
 
+import com.example.app_1.App_1;
+import com.example.app_1.R;
 import com.example.utils.BitmapCalc;
+import com.example.utils.DiskLruImageCache;
 import com.example.utils.Storage;
 
 /**
@@ -59,48 +60,59 @@ import com.example.utils.Storage;
  * A local cache of downloaded images is maintained internally to improve
  * performance.
  */
-public class ImageDownloader {
-	Activity actv;
-	
-		
-	
-	public ImageDownloader(Activity a){
-		actv = a;
-		
-		
-	}
-	
+public class ImageDownloader {	
 	private static final String LOG_TAG = "ImageDownloader";
 
-	/*
-	 * Cache-related fields and methods.
-	 * 
-	 * We use a hard and a soft cache. A soft reference cache is too
-	 * aggressively cleared by the Garbage Collector.
-	 */
-	private static final int HARD_CACHE_CAPACITY = 10;
-	private static final int DELAY_BEFORE_PURGE = 10 * 1000; // in milliseconds
-	// Hard cache, with a fixed maximum capacity and a life duration
-	private final HashMap<String, Bitmap> sHardBitmapCache = new LinkedHashMap<String, Bitmap>(	HARD_CACHE_CAPACITY / 2, 0.75f, true) {
-		@Override
-		protected boolean removeEldestEntry(
-				LinkedHashMap.Entry<String, Bitmap> eldest) {
-			if (size() > HARD_CACHE_CAPACITY) {
-				// Entries push-out of hard reference cache are transferred to
-				// soft reference cache
-				sSoftBitmapCache.put(eldest.getKey(),
-						new SoftReference<Bitmap>(eldest.getValue()));
-				return true;
-			} else
-				return false;
+
+	Context context = App_1.getAppContext();
+	private Bitmap mPlaceHolderBitmap = BitmapCalc.decodeSampleBitmapFromResources(context.getResources(), R.drawable.image_placeholder, 100, 100);
+	
+	private File imagesDirectory;
+	
+	private DiskLruImageCache mDiskLruCache;
+	private final Object mDiskCacheLock = new Object();
+	private boolean mDiskCacheStarting = true;
+	private static final int DISK_CACHE_SIZE = 1024 * 1024 * 10; // 10MB
+	private static final String DISK_CACHE_SUBDIR = "thumbnails1";
+	private static final String IMG_DIR = "images1";
+	private static final int IMG_W = 20;
+	private static final int IMG_H = 20;
+	private static int JPG_QUALITY = 100;
+	final int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
+	final int cacheSize = maxMemory / 8;
+	private LruCache<String, Bitmap> mMemoryCache;
+	
+	
+	
+
+	
+	public ImageDownloader(){
+		imagesDirectory = new File(Storage.getAppRootDir()+File.separator+IMG_DIR);
+		if (!imagesDirectory.getParentFile().mkdirs()) {
+			Log.e("TAG", "Directory not created");
+			
 		}
-	};
-	// Soft cache for bitmaps kicked out of hard cache
-	private final static ConcurrentHashMap<String, SoftReference<Bitmap>> sSoftBitmapCache = new ConcurrentHashMap<String, SoftReference<Bitmap>>(
-			HARD_CACHE_CAPACITY / 2);
+		Log.d(LOG_TAG,"imageDirectory "+imagesDirectory.getAbsolutePath());
+		
 
-	private final Handler purgeHandler = new Handler();
+// INIT MEMORY AND DISK CACHE--------------------------------------------
+		mMemoryCache = new LruCache<String, Bitmap>(cacheSize) {
+			@Override
+			protected int sizeOf(String key, Bitmap bitmap) {
+				return bitmap.getByteCount() / 1024;
+			}
+		};
+		
+	    File diskCacheDir = Storage.getDiskCacheDir(DISK_CACHE_SUBDIR);
+	    Log.d(LOG_TAG, "DISK cache Dir: "+ diskCacheDir);
+	    new InitDiskCacheTask().execute(diskCacheDir);
+	    
+//------------------------------------------------------ END OF INIT CACHE
+	}
 
+
+
+	
 	/**
 	 * Download the specified image from the Internet and binds it to the
 	 * provided ImageView. The binding is immediate if the image is found in the
@@ -113,8 +125,8 @@ public class ImageDownloader {
 	 *            The ImageView to bind the downloaded image to.
 	 */
 	public void download(String url, ImageView imageView) {
-		resetPurgeTimer();
-		Bitmap bitmap = getBitmapFromCache(url);
+		/*
+		Bitmap bitmap = getBitmapFromDiskCache(key)(url);
 
 		if (bitmap == null) {
 			forceDownload(url, imageView);
@@ -122,34 +134,20 @@ public class ImageDownloader {
 			cancelPotentialDownload(url, imageView);
 			imageView.setImageBitmap(bitmap);
 		}
-	}
-
-	/*
-	 * Same as download but the image is always downloaded and the cache is not
-	 * used. Kept private at the moment as its interest is not clear. private
-	 * void forceDownload(String url, ImageView view) { forceDownload(url, view,
-	 * null); }
-	 */
-
-	/**
-	 * Same as download but the image is always downloaded and the cache is not
-	 * used. Kept private at the moment as its interest is not clear.
-	 */
-	private void forceDownload(String url, ImageView imageView) {
-		// State sanity: url is guaranteed to never be null in
-		// DownloadedDrawable and cache keys.
+		*/
 		if (url == null) {
 			imageView.setImageDrawable(null);
 			return;
 		}
 		if(cancelPotentialDownload(url, imageView)){
 			BitmapDownloaderTask task = new BitmapDownloaderTask(imageView);
-			DownloadedDrawable downloadedDrawable = new DownloadedDrawable(task);
+			DownloadedDrawable downloadedDrawable = new DownloadedDrawable(context.getResources(), mPlaceHolderBitmap,task);
 			imageView.setImageDrawable(downloadedDrawable);
 			imageView.setMinimumHeight(156);
 			task.execute(url);			
 		}
 	}
+
 
 	/**
 	 * Returns true if the current download has been canceled or if there was no
@@ -239,77 +237,6 @@ public class ImageDownloader {
 		return null;
 	}
 
-	private final Runnable purger = new Runnable() {
-		public void run() {
-			clearCache();
-		}
-	};
-
-	/**
-	 * Adds this bitmap to the cache.
-	 * 
-	 * @param bitmap
-	 *            The newly downloaded bitmap.
-	 */
-	private void addBitmapToCache(String url, Bitmap bitmap) {
-		if (bitmap != null) {
-			synchronized (sHardBitmapCache) {
-				sHardBitmapCache.put(url, bitmap);
-			}
-		}
-	}
-
-	/**
-	 * @param url
-	 *            The URL of the image that will be retrieved from the cache.
-	 * @return The cached bitmap or null if it was not found.
-	 */
-	private Bitmap getBitmapFromCache(String url) {
-		// First try the hard reference cache
-		synchronized (sHardBitmapCache) {
-			final Bitmap bitmap = sHardBitmapCache.get(url);
-			if (bitmap != null) {
-				// Bitmap found in hard cache
-				// Move element to first position, so that it is removed last
-				sHardBitmapCache.remove(url);
-				sHardBitmapCache.put(url, bitmap);
-				return bitmap;
-			}
-		}
-
-		// Then try the soft reference cache
-		SoftReference<Bitmap> bitmapReference = sSoftBitmapCache.get(url);
-		if (bitmapReference != null) {
-			final Bitmap bitmap = bitmapReference.get();
-			if (bitmap != null) {
-				// Bitmap found in soft cache
-				return bitmap;
-			} else {
-				// Soft reference has been Garbage Collected
-				sSoftBitmapCache.remove(url);
-			}
-		}
-
-		return null;
-	}
-
-	/**
-	 * Clears the image cache used internally to improve performance. Note that
-	 * for memory efficiency reasons, the cache will automatically be cleared
-	 * after a certain inactivity delay.
-	 */
-	public void clearCache() {
-		sHardBitmapCache.clear();
-		sSoftBitmapCache.clear();
-	}
-
-	/**
-	 * Allow a new delay before the automatic cache clear is done.
-	 */
-	private void resetPurgeTimer() {
-		purgeHandler.removeCallbacks(purger);
-		purgeHandler.postDelayed(purger, DELAY_BEFORE_PURGE);
-	}
 
 	// INER CLASSES
 	
@@ -346,6 +273,7 @@ public class ImageDownloader {
 	 */
 	class BitmapDownloaderTask extends AsyncTask<String, Void, Bitmap> {
 		private String url;
+		private File extFile;
 		private final WeakReference<ImageView> imageViewReference;
 
 		public BitmapDownloaderTask(ImageView imageView) {
@@ -361,44 +289,93 @@ public class ImageDownloader {
 			url = params[0];
 			String imageName = url.substring( url.lastIndexOf('/')+1, url.length() );
 			
-			if((Storage.isfileExist(imageName, Storage.getAlbumDir()))!=null){
-				File extFile = Storage.isfileExist(imageName, Storage.getAlbumDir());
-				b = BitmapFactory.decodeFile(extFile.getAbsolutePath());
-				Log.d("SD", imageName+" -already exist");
-				return b;
-			}
-			else{
-				b = downloadBitmap(url);
-				if(b!=null){
-					int saveStatus = Storage.saveToSD(b, imageName);
-					switch (saveStatus) {
-					case 0:
-						Log.d("SD", imageName+" -save successful");
-						//Storage.galleryAddPic(actv, Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)+"/"+imageName);
-						break;
-					default:
-						Log.e("SD", url+" -not saved");
-						break;
+			// Check image directory
+			
+			// Check disk cache in background thread
+	        b = getBitmapFromDiskCache(imageName);	 
+	        if(b==null){
+		        	if((extFile =Storage.isfileExist(imageName, imagesDirectory))!=null){
+						Log.d(LOG_TAG, imageName+" - file Length: "+extFile.length()/1024+"kB");
+						b= BitmapCalc.decodeSampleBitmapFromFile(extFile.getAbsolutePath(), IMG_W, IMG_H);
+					    addBitmapToCache(imageName, b);
+						Log.d("cache", imageName+" - has been resized and add to cache, size:"+ b.getByteCount()/1024+"kB");
+						return b;
+						
+						/*	
+						b = BitmapFactory.decodeFile(extFile.getAbsolutePath());
+						Log.d("SD", imageName+" -already exist");
+				        addBitmapToCache(imageName, b);
+						return b;
+						*/
+		        	}
+					else{ 
+						b = downloadBitmap(url);
+						if(b!=null){
+							int saveStatus = Storage.saveToSD(b, imageName,imagesDirectory);
+							switch (saveStatus) {
+							case 0:
+								Log.d("SD", imageName+" - saved successful");
+								b = BitmapCalc.getResizedBitmap(b, IMG_W, IMG_H);
+						        addBitmapToCache(imageName, b);
+								Log.d("cache", imageName+" - has been resized and add to cache, size:"+ b.getByteCount()/1024+"kB");
+								break;
+							default:
+								Log.e("SD", url+" - not saved");
+								break;
+							}
+						}
+						return b;
 					}
-				}
-				return b;
-			}
-		}
+		        }
+	        
+	        //addBitmapToCache(imageName, b);
+	        Log.d(LOG_TAG,"bitmap gets" +imageName+ " from DiskCache, size:"+b.getByteCount()/1024+"kB");
+	        return b; // bitmap form cache 
+	      }
+		
+	    public void addBitmapToCache(String key, Bitmap bitmap) {
+	        // Add to memory cache as before
+	        if (getBitmapFromMemCache(key) == null) {
+	            mMemoryCache.put(key, bitmap);
+	        }
 
-		/**
-		 * Once the image is downloaded, associates it to the imageView
-		 */
+	        // Also add to disk cache
+	        synchronized (mDiskCacheLock) {
+	            if (mDiskLruCache != null && mDiskLruCache.getBitmap(key) == null) {
+	                mDiskLruCache.put(key, bitmap);
+	            }
+	        }
+	    }
+	    public Bitmap getBitmapFromDiskCache(String key) {
+	        synchronized (mDiskCacheLock) {
+	            // Wait while disk cache is started from background thread
+	            while (mDiskCacheStarting) {
+	                try {
+	                    mDiskCacheLock.wait();
+	                } catch (InterruptedException e) {}
+	            }
+	            if (mDiskLruCache != null) {
+	                return mDiskLruCache.getBitmap(key);
+	            }
+	        }
+	        return null;
+	    }	
+			
+		
+
+		// Once the image is downloaded, associates it to the imageView
 		@Override
 		protected void onPostExecute(Bitmap bitmap) {
 			if (isCancelled()) {
 				bitmap = null;
 			}
 
-			addBitmapToCache(url, bitmap);
-
-			if (imageViewReference != null) {
+			if (imageViewReference != null && bitmap!=null) {
 				ImageView imageView = imageViewReference.get();
 				BitmapDownloaderTask bitmapDownloaderTask = getBitmapDownloaderTask(imageView);
+				if(this == bitmapDownloaderTask && imageView !=null){
+					imageView.setImageBitmap(bitmap);
+				}
 			}
 		}
 	}
@@ -414,11 +391,11 @@ public class ImageDownloader {
 	 * download finish order.
 	 * </p>
 	 */
-	static class DownloadedDrawable extends ColorDrawable {
+	static class DownloadedDrawable extends BitmapDrawable {
 		private final WeakReference<BitmapDownloaderTask> bitmapDownloaderTaskReference;
 
-		public DownloadedDrawable(BitmapDownloaderTask bitmapDownloaderTask) {
-			super(Color.BLACK);
+		public DownloadedDrawable(Resources res, Bitmap bitmap, BitmapDownloaderTask bitmapDownloaderTask) {
+			super(res,bitmap);
 			bitmapDownloaderTaskReference = new WeakReference<BitmapDownloaderTask>(
 					bitmapDownloaderTask);
 		}
@@ -426,6 +403,28 @@ public class ImageDownloader {
 		public BitmapDownloaderTask getBitmapDownloaderTask() {
 			return bitmapDownloaderTaskReference.get();
 		}
+	}
+	
+	
+	/* C A C H E */
+
+	
+	public Bitmap getBitmapFromMemCache(String key) {
+		return mMemoryCache.get(key);
+	}
+	
+
+	class InitDiskCacheTask extends AsyncTask<File, Void, Void> {
+	    @Override
+	    protected Void doInBackground(File... params) {
+	        synchronized (mDiskCacheLock) {
+	            File cacheDir = params[0];
+	            mDiskLruCache = new DiskLruImageCache(cacheDir, DISK_CACHE_SIZE, CompressFormat.JPEG, JPG_QUALITY);
+	            mDiskCacheStarting = false; // Finished initialization
+	            mDiskCacheLock.notifyAll(); // Wake any waiting threads
+	        }
+	        return null;
+	    }
 	}
 
 }

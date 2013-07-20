@@ -54,7 +54,7 @@ public class AndroidTextToSpeechActivity extends Activity implements
 
 	        Log.i("TTS","Available locales " + Arrays.toString(AvalLoc));
 	        
-			Locale pol_loc = new Locale("pl", "PL");
+			Locale pol_loc = new Locale("en", "EN");
 			if(TextToSpeech.LANG_AVAILABLE ==tts.isLanguageAvailable(pol_loc)){
 				result = tts.setLanguage(pol_loc);
 				}

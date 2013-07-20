@@ -11,6 +11,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Scanner;
 
+import com.example.app_1.App_1;
+
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -22,6 +24,7 @@ import android.os.Environment;
 import android.util.Log;
 
 public class Storage {
+	private static final String LOG_TAG = "Storage";
     public static final int IO_BUFFER_SIZE = 8 * 1024;
 
 	/* INTERNAL ------------------------------------------------------------------------------------------------------*/
@@ -90,8 +93,8 @@ public class Storage {
 	 * @param c
 	 *            context
 	 */
-	public static void deleteInternalFile(String filename, Context c) {
-		c.deleteFile(filename);
+	public static void deleteInternalFile(String filename) {
+		App_1.getAppContext().deleteFile(filename);
 	}
 
 	/* EXTERNAL----------------------------------------------------------------------------------------------------- */
@@ -112,9 +115,9 @@ public class Storage {
 		return false;
 	}
 	
-	private static File getExternalStorageDir(Context context, String filename) {
+	private static File getExternalStorageDir(String filename) {
 		// Get the directory for the app's private directory
-		File file = new File(context.getExternalFilesDir(null), filename);
+		File file = new File(App_1.getAppContext().getExternalFilesDir(null), filename);
 		if (!file.mkdirs()) {
 			Log.e("TAG", "Directory not created");
 		}
@@ -124,8 +127,6 @@ public class Storage {
 	private static File getExternalPublicStorageDir(String filename,
 			String state) {
 		File sdpath = Environment.getExternalStoragePublicDirectory(state);
-		// String sdpath=
-		// Environment.getExternalStorageDirectory().getAbsolutePath();
 		File file = new File(sdpath + File.separator + filename);
 		if (!file.getParentFile().mkdirs()) {
 			Log.e("TAG", "Directory not created");
@@ -137,7 +138,7 @@ public class Storage {
 		
 		String JPEG_FILE_PREFIX = "img";
 		String JPEG_FILE_SUFIX= ".jpg";
-		// create an image file name
+		// create a image file name
 		String timeStamp = new SimpleDateFormat("yyyyyMMdd_HHmmss").format(new Date());
 		String imageFileName = JPEG_FILE_PREFIX + timeStamp+"_";
 		try {
@@ -167,9 +168,20 @@ public class Storage {
 		return new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),"");
 	}
 	
-	public static boolean deleteExtFile(String filename, Context context) {
+	public static File getAppRootDir(){
+    	Context c=App_1.getAppContext();
+    	if(isExternalSotrageReadable()|| hasExternalCacheDir()){
+    		    	return c.getExternalFilesDir(null);
+    	}
+    	else{
+            final String cacheDir = "/Android/data/" + c.getPackageName() + "/files/";
+            return new File(Environment.getExternalStorageDirectory().getPath() + cacheDir);
+    	}
+    }
+	
+	public static boolean deleteExtFile(String filename) {
 		if (isExternalSotrageReadable()) {
-			File file = getExternalStorageDir(context, filename);
+			File file = getExternalStorageDir(filename);
 			return file.delete();
 		}
 		return false;
@@ -183,9 +195,9 @@ public class Storage {
 		return false;
 	}
 	
-	public static boolean writeToExternalFile(String filename, byte[] data,	Context context) {
+	public static boolean writeToExternalFile(String filename, byte[] data) {
 		if (isExternalStorageWirtable()) {
-			File file = getExternalStorageDir(context, filename);
+			File file = getExternalStorageDir(filename);
 			try {
 				OutputStream os = new FileOutputStream(file);
 				os.write(data);
@@ -228,7 +240,7 @@ public class Storage {
 	 */
 	public static String readFromExternalFile(String filename, Context context) {
 		if (isExternalSotrageReadable()) {
-			File file = getExternalStorageDir(context, filename);
+			File file = getExternalStorageDir(filename);
 			try {
 				FileInputStream is = new FileInputStream(file);
 				return Conversions.convertStreamToString(is);
@@ -310,31 +322,33 @@ public class Storage {
         return true;
     }
 
-    public static File getExternalCacheDir(Context context) {
+    public static File getExternalCacheDir() {
+    	Context context = App_1.getAppContext();
+    	
         if (hasExternalCacheDir()) {
             return context.getExternalCacheDir();
         }
-
+        Log.w(LOG_TAG, "ON FROYO");
         // Before Froyo we need to construct the external cache dir ourselves
         final String cacheDir = "/Android/data/" + context.getPackageName() + "/cache/";
         return new File(Environment.getExternalStorageDirectory().getPath() + cacheDir);
     }
-
+    
     public static boolean hasExternalCacheDir() {
         return Build.VERSION.SDK_INT >= Build.VERSION_CODES.FROYO;
     }
 	
 	// Creates a unique subdirectory of the designated app cache directory. Tries to use external
 	// but if not mounted, falls back on internal storage.
-	public static File getDiskCacheDir(Context context, String uniqueName){
+	public static File getDiskCacheDir(String subDir){
 	    // Check if media is mounted or storage is built-in, if so, try and use external cache dir
 	    // otherwise use internal cache dir
 	    final String cachePath =
 	            Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState()) ||
-	                    !Environment.isExternalStorageRemovable() ? getExternalCacheDir(context).getPath() :
-	                            context.getCacheDir().getPath();
+	                    !Environment.isExternalStorageRemovable() ? getExternalCacheDir().getPath() :
+	                            App_1.getAppContext().getCacheDir().getPath();
 
-	    return new File(cachePath + File.separator + uniqueName);
+	    return new File(cachePath + File.separator + subDir);
 	}
 	
 	
@@ -345,13 +359,13 @@ public class Storage {
 	 * @param imageName
 	 * @return 0- save successful, -1 - not saved, 1 - aleready exist 
 	 */
-	public static int saveToSD(Bitmap bitmap,String imageName){
+	public static int saveToSD(Bitmap bitmap,String imageName, File directory){
 		ByteArrayOutputStream  bytes= new ByteArrayOutputStream();
 		bitmap.compress(Bitmap.CompressFormat.JPEG,100,bytes);
-		if(isfileExist(imageName, getAlbumDir())!=null){
+		if(isfileExist(imageName, directory)!=null){
 			return 1;
 		}
-		File f = createImageFile(imageName);
+		File f = new File(directory,imageName);
 		FileOutputStream fo;
 		try {
 				fo = new FileOutputStream(f);

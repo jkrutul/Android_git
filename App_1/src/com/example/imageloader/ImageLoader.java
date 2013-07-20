@@ -43,24 +43,13 @@ public class ImageLoader {
 	private LruCache<String, Bitmap> mMemoryCache;
 	
 	private ImageLoader(){
-		
 	}
 
 	public ImageLoader(Context c) {
 		this.context = c;
 		mPlaceHolderBitmap = BitmapCalc.decodeSampleBitmapFromResources(context.getResources(), R.drawable.image_placeholder, 100, 100);
 		
-		
 		/* INITIALIZE MEMORY CACHE */
-		
-	    // Get max available VM memory, exceeding this amount will throw an
-	    // OutOfMemory exception. Stored in kilobytes as LruCache takes an
-	    // int in its constructor.
-	    final int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
-
-	    // Use 1/8th of the available memory for this memory cache.
-	    final int cacheSize = maxMemory / 8;
-
 		mMemoryCache = new LruCache<String, Bitmap>(cacheSize) {
 			@Override
 			protected int sizeOf(String key, Bitmap bitmap) {
@@ -72,7 +61,7 @@ public class ImageLoader {
 		
 		
 		/* INITIALIZE DISK CACHE */
-	    File cacheDir = Storage.getDiskCacheDir(context, DISK_CACHE_SUBDIR);
+	    File cacheDir = Storage.getDiskCacheDir(DISK_CACHE_SUBDIR);
 	    new InitDiskCacheTask().execute(cacheDir);
 
 		
@@ -218,7 +207,7 @@ public class ImageLoader {
 	    protected Void doInBackground(File... params) {
 	        synchronized (mDiskCacheLock) {
 	            File cacheDir = params[0];
-	            mDiskLruCache = new DiskLruImageCache(context,cacheDir.getAbsolutePath(), DISK_CACHE_SIZE, CompressFormat.PNG, 100);
+	            mDiskLruCache = new DiskLruImageCache(cacheDir, DISK_CACHE_SIZE, CompressFormat.JPEG, 100);
 	            mDiskCacheStarting = false; // Finished initialization
 	            mDiskCacheLock.notifyAll(); // Wake any waiting threads
 	        }

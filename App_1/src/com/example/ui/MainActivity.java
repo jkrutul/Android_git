@@ -16,6 +16,7 @@ import android.media.AudioManager.OnAudioFocusChangeListener;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.CalendarContract;
 import android.provider.CalendarContract.Events;
 import android.provider.ContactsContract.CommonDataKinds.Phone;
@@ -31,9 +32,9 @@ import android.widget.Toast;
 
 import com.example.app_1.R;
 import com.example.imagedownloader.ImageListActivity;
+import com.example.imageloader.ImageLoader;
 import com.example.utils.BitmapCalc;
 import com.example.utils.Storage;
-import com.example.imageloader.*;
 
 public class MainActivity extends Activity {
 	public final static String EXTRA_MESSAGE = "com.example.app_1.MESSAGE";
@@ -118,6 +119,7 @@ public class MainActivity extends Activity {
 		mShareActionProvider = (ShareActionProvider) item.getActionProvider();
 		return true;
 	}
+	
 
 	// Call to update the share intent
 	private void setShareIntent(Intent shareIntent) {

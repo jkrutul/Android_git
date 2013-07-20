@@ -15,6 +15,7 @@ import android.graphics.BitmapFactory;
 import android.os.Environment;
 import android.util.Log;
 
+import com.example.app_1.App_1;
 import com.example.app_1.BuildConfig;
 
 public class DiskLruImageCache {
@@ -26,9 +27,8 @@ public class DiskLruImageCache {
     private static final int VALUE_COUNT = 1;
     private static final String TAG = "DiskLruImageCache";
 
-    public DiskLruImageCache( Context context,String uniqueName, int diskCacheSize,CompressFormat compressFormat, int quality ) {
+    public DiskLruImageCache(File diskCacheDir, int diskCacheSize,CompressFormat compressFormat, int quality ) {
         try {
-                final File diskCacheDir = getDiskCacheDir(context, uniqueName );
                 mDiskCache = DiskLruCache.open( diskCacheDir, APP_VERSION, VALUE_COUNT, diskCacheSize );
                 mCompressFormat = compressFormat;
                 mCompressQuality = quality;
@@ -48,19 +48,6 @@ public class DiskLruImageCache {
                 out.close();
             }
         }
-    }
-
-    private File getDiskCacheDir(Context context, String uniqueName) {
-
-    // Check if media is mounted or storage is built-in, if so, try and use external cache dir
-    // otherwise use internal cache dir
-        final String cachePath =
-            Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState()) ||
-                    !Storage.isExternalStorageRemovable() ?
-                    		Storage.getExternalCacheDir(context).getPath() :
-                    context.getCacheDir().getPath();
-
-        return new File(cachePath + File.separator + uniqueName);
     }
 
     public void put( String key, Bitmap data ) {

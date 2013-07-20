@@ -16,11 +16,13 @@
 
 package com.example.imagedownloader;
 
+import android.app.Activity;
 import android.app.ListActivity;
 import android.os.Bundle;
-import android.widget.RadioGroup;
+import android.os.Environment;
 
 import com.example.app_1.R;
+import com.example.utils.Storage;
 
 public class ImageListActivity extends ListActivity {
 
@@ -29,7 +31,15 @@ public class ImageListActivity extends ListActivity {
         super.onCreate(savedInstanceState);
         
         setContentView(R.layout.activity_imagelist);
-        setListAdapter(new ImageAdapter(this));
+        setListAdapter(new ImageAdapter());
     }
+    
+	@Override
+	public void onDestroy(){
+		super.onDestroy();
+		Storage.galleryAddPic((Activity)this, Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).getAbsolutePath());
+		
+	}
+	
   
 }
