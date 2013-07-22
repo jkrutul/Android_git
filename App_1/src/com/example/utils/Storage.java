@@ -3,15 +3,11 @@ package com.example.utils;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Scanner;
-
-import com.example.app_1.App_1;
 
 import android.app.Activity;
 import android.content.Context;
@@ -23,8 +19,14 @@ import android.os.Build;
 import android.os.Environment;
 import android.util.Log;
 
+import com.example.app_1.App_1;
+
 public class Storage {
 	private static final String LOG_TAG = "Storage";
+	
+	public static final String IMG_DIR = "Images";
+	public static final String DISK_CACHE_SUBDIR = "thumbnails";
+	
     public static final int IO_BUFFER_SIZE = 8 * 1024;
 
 	/* INTERNAL ------------------------------------------------------------------------------------------------------*/
@@ -275,6 +277,13 @@ public class Storage {
 		return null;
 	}
 
+	public static File[] getFilesList(File path){
+		if(path.isDirectory()){
+			return path.listFiles();
+		}
+		return null;		
+	}
+
 	/* SHARED PREFERENCES ------------------------------------------------------------------------------------------ */
 	public static void saveToSharedPreferences(String prefName, String value,
 			String key, Context context, int mode) {
@@ -338,8 +347,10 @@ public class Storage {
         return Build.VERSION.SDK_INT >= Build.VERSION_CODES.FROYO;
     }
 	
-	// Creates a unique subdirectory of the designated app cache directory. Tries to use external
-	// but if not mounted, falls back on internal storage.
+	/*
+	 *  Creates a unique subdirectory of the designated app cache directory. Tries to use external
+	 *  but if not mounted, falls back on internal storage.
+	 */
 	public static File getDiskCacheDir(String subDir){
 	    // Check if media is mounted or storage is built-in, if so, try and use external cache dir
 	    // otherwise use internal cache dir
@@ -366,15 +377,22 @@ public class Storage {
 			return 1;
 		}
 		File f = new File(directory,imageName);
-		FileOutputStream fo;
-		try {
-				fo = new FileOutputStream(f);
-				fo.write(bytes.toByteArray());
-				fo.close();	
-				return 0;
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+		
+		if(!f.getParentFile().mkdirs()){
+			Log.w(LOG_TAG, "file: "+f.getName()+" path:"+f.getAbsolutePath()+"already exist or not created");
+		}
+		
+			FileOutputStream fo;
+			try {
+					fo = new FileOutputStream(f);
+					fo.write(bytes.toByteArray());
+					fo.close();	
+					return 0;
+				} catch (IOException e) {
+					e.printStackTrace();
+				}			
+		
+		
 		return -1;
 	}
 	
@@ -386,5 +404,22 @@ public class Storage {
 			return null;
 	}
 
+	public static File getDiskCacheDirectory(int w, int h){
+		File cacheDIR = getDiskCacheDir(DISK_CACHE_SUBDIR+"_"+w+"x"+h);
+		if (!cacheDIR.getParentFile().mkdirs()) 
+			Log.e("TAG", "Directory not created or it already exist");
+
+		Log.d(LOG_TAG,"cache directory "+cacheDIR.getAbsolutePath());	
+		return cacheDIR;
+	}
 	
+	public static File getImagesDirectory(){
+		File imgDIR = new File(getAppRootDir()+File.separator+IMG_DIR+File.separator);
+		
+		if (!imgDIR.getParentFile().mkdirs()) 
+			Log.e("TAG", "Directory not created or it already exist");
+
+		Log.d(LOG_TAG,"imageDirectory "+imgDIR.getAbsolutePath());
+		return  imgDIR ;
+	}
 }

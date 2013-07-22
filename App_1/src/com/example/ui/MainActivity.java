@@ -100,7 +100,7 @@ public class MainActivity extends Activity {
 		 * //am.registerMediaButtonEventReceiver(RemoteControlReceiver);
 		 */
 		mImageView = (ImageView) findViewById(R.id.picture_image);
-		ImageLoader il = new ImageLoader(this);
+		ImageLoader il = new ImageLoader();
 		il.loadBitmap(R.drawable.ic_launcher, mImageView);
 		
 
@@ -248,6 +248,10 @@ public class MainActivity extends Activity {
 			startActivity(calendarIntent);
 	}
 
+	public void gotoImageDetailActivity(View view){
+		Intent intent = new Intent(this, ImageDetailActivity.class);
+		startActivity(intent);
+	}
 	// ACTIVITIES FOR RESULT
 	public void takePicture(View view) {
 		Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);

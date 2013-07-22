@@ -24,8 +24,13 @@
             <TextView
                 android:id="@+id/console"
                 android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+            <Button
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                 />
+                android:onClick="gotoImageDetailActivity"
+                android:text="goto ImageDetailActivity" />
 
             <Button
                 android:layout_width="wrap_content"

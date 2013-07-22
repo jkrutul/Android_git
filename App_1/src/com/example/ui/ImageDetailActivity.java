@@ -1,110 +1,237 @@
 package com.example.ui;
 
+import java.io.File;
+import java.lang.ref.WeakReference;
+
+import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.Bitmap.CompressFormat;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
+import android.support.v4.util.LruCache;
 import android.support.v4.view.ViewPager;
+import android.widget.ImageView;
 
 import com.example.app_1.R;
+import com.example.utils.BitmapCalc;
+import com.example.utils.DiskLruImageCache;
+import com.example.utils.Storage;
 
-public class ImageDetailActivity extends FragmentActivity{
-	 public static final String EXTRA_IMAGE = "extra_image";
-	 public static final String LOG_TAG = "ImageDetailActivity";
+public class ImageDetailActivity extends FragmentActivity {
+	private DiskLruImageCache mDiskLruCache;
+	public static final String EXTRA_IMAGE = "extra_image";
+	public static final String LOG_TAG = "ImageDetailActivity";
+	private LruCache<String, Bitmap> mMemoryCache;
+	private boolean mDiskCacheStarting = true;
+	private static final int DISK_CACHE_SIZE = 1024 * 1024 * 10; // 10MB
+	private static final String DISK_CACHE_SUBDIR = "IDA_thumbnails";
+	private static final int IMG_W = 500;
+	private static final int IMG_H = 500;
 
-	    private ImagePagerAdapter mAdapter;
-	    private ViewPager mPager;
+	private final Object mDiskCacheLock = new Object();
 
-	    // A static dataset to back the ViewPager adapter
-//	    public final static Integer[] imageResIds = new Integer[] {
-//	            R.drawable.sample_image_1, R.drawable.sample_image_2, R.drawable.sample_image_3,
-//	            R.drawable.sample_image_4, R.drawable.sample_image_5, R.drawable.sample_image_6,
-//	            R.drawable.sample_image_7, R.drawable.sample_image_8, R.drawable.sample_image_9};
-	    
-	    public static final String[] URLS = new String[]{
-	    	"http://ns223506.ovh.net/rozne/73ab571abe460628142794b5f59c8d3e/wallpaper-2923580.jpg",
-	    	"http://ns223506.ovh.net/rozne/8ca992d2c420e0818df37727839ce3e3/wallpaper-2911870.jpg",
-	    	"http://ns223506.ovh.net/rozne/0a74efea86d03c2d3430a0f1ab298f10/wallpaper-2912041.jpg",
-	        "http://lh5.ggpht.com/_mrb7w4gF8Ds/TCpetKSqM1I/AAAAAAAAD2c/Qef6Gsqf12Y/s144-c/_DSC4374%20copy.jpg",
-	        "http://lh5.ggpht.com/_Z6tbBnE-swM/TB0CryLkiLI/AAAAAAAAVSo/n6B78hsDUz4/s144-c/_DSC3454.jpg",
-	        "http://lh3.ggpht.com/_GEnSvSHk4iE/TDSfmyCfn0I/AAAAAAAAF8Y/cqmhEoxbwys/s144-c/_MG_3675.jpg",
-	        "http://lh6.ggpht.com/_Nsxc889y6hY/TBp7jfx-cgI/AAAAAAAAHAg/Rr7jX44r2Gc/s144-c/IMGP9775a.jpg",
-	        "http://lh3.ggpht.com/_lLj6go_T1CQ/TCD8PW09KBI/AAAAAAAAQdc/AqmOJ7eg5ig/s144-c/Juvenile%20Gannet%20despute.jpg",
-	        "http://lh6.ggpht.com/_ZN5zQnkI67I/TCFFZaJHDnI/AAAAAAAABVk/YoUbDQHJRdo/s144-c/P9250508.JPG",
-	        "http://lh4.ggpht.com/_XjNwVI0kmW8/TCOwNtzGheI/AAAAAAAAC84/SxFJhG7Scgo/s144-c/0014.jpg",
-	        "http://lh6.ggpht.com/_lnDTHoDrJ_Y/TBvKsJ9qHtI/AAAAAAAAG6g/Zll2zGvrm9c/s144-c/000007.JPG",
-	        "http://lh6.ggpht.com/_qvCl2efjxy0/TCIVI-TkuGI/AAAAAAAAOUY/vbk9MURsv48/s144-c/DSC_0844.JPG",
-	        "http://lh4.ggpht.com/_TPlturzdSE8/TBv4ugH60PI/AAAAAAAAMsI/p2pqG85Ghhs/s144-c/_MG_3963.jpg",
-	        "http://lh4.ggpht.com/_4f1e_yo-zMQ/TCe5h9yN-TI/AAAAAAAAXqs/8X2fIjtKjmw/s144-c/IMG_1786.JPG",
-	        "http://lh6.ggpht.com/_iFt5VZDjxkY/TB9rQyWnJ4I/AAAAAAAADpU/lP2iStizJz0/s144-c/DSCF1014.JPG",
-	        "http://lh5.ggpht.com/_hepKlJWopDg/TB-_WXikaYI/AAAAAAAAElI/715k4NvBM4w/s144-c/IMG_0075.JPG",
-	        "http://lh6.ggpht.com/_OfRSx6nn68g/TCzsQic_z3I/AAAAAAABOOI/5G4Kwzb2qhk/s144-c/EASTER%20ISLAND_Hanga%20Roa_31.5.08_46.JPG",
-	        "http://lh6.ggpht.com/_ZGv_0FWPbTE/TB-_GLhqYBI/AAAAAAABVxs/cVEvQzt0ke4/s144-c/IMG_1288_hf.jpg",
-	        "http://lh6.ggpht.com/_a29lGRJwo0E/TBqOK_tUKmI/AAAAAAAAVbw/UloKpjsKP3c/s144-c/31012332.jpg",
-	        "http://lh3.ggpht.com/_55Lla4_ARA4/TB6xbyxxJ9I/AAAAAAABTWo/GKe24SwECns/s144-c/Bluebird%20049.JPG",
-	        "http://lh3.ggpht.com/_iVnqmIBYi4Y/TCaOH6rRl1I/AAAAAAAA1qg/qeMerYQ6DYo/s144-c/Kwiat_100626_0016.jpg",
-	        "http://lh6.ggpht.com/_QFsB_q7HFlo/TCItd_2oBkI/AAAAAAAAFsk/4lgJWweJ5N8/s144-c/3705226938_d6d66d6068_o.jpg",
-	        "http://lh5.ggpht.com/_JTI0xxNrKFA/TBsKQ9uOGNI/AAAAAAAChQg/z8Exh32VVTA/s144-c/CRW_0015-composite.jpg",
-	        "http://lh6.ggpht.com/_loGyjar4MMI/S-InVNkTR_I/AAAAAAAADJY/Fb5ifFNGD70/s144-c/Moving%20Rock.jpg",
-	        "http://lh4.ggpht.com/_L7i4Tra_XRY/TBtxjScXLqI/AAAAAAAAE5o/ue15HuP8eWw/s144-c/opera%20house%20II.jpg",
-	        "http://lh3.ggpht.com/_rfAz5DWHZYs/S9cstBTv1iI/AAAAAAAAeYA/EyZPUeLMQ98/s144-c/DSC_6425.jpg",
-	        "http://lh6.ggpht.com/_iGI-XCxGLew/S-iYQWBEG-I/AAAAAAAACB8/JuFti4elptE/s144-c/norvig-polar-bear.jpg",
-	        "http://lh3.ggpht.com/_M3slUPpIgmk/SlbnavqG1cI/AAAAAAAACvo/z6-CnXGma7E/s144-c/mf_003.jpg",
-	        "http://lh4.ggpht.com/_loGyjar4MMI/S-InQvd_3hI/AAAAAAAADIw/dHvCFWfyHxQ/s144-c/Rainbokeh.jpg",
-	        "http://lh4.ggpht.com/_yy6KdedPYp4/SB5rpK3Zv0I/AAAAAAAAOM8/mokl_yo2c9E/s144-c/Point%20Reyes%20road%20.jpg",
-	        "http://lh5.ggpht.com/_6_dLVKawGJA/SMwq86HlAqI/AAAAAAAAG5U/q1gDNkmE5hI/s144-c/mobius-glow.jpg",
-	        "http://lh3.ggpht.com/_QFsB_q7HFlo/TCItc19Jw3I/AAAAAAAAFs4/nPfiz5VGENk/s144-c/4551649039_852be0a952_o.jpg",
-	        "http://lh6.ggpht.com/_TQY-Nm7P7Jc/TBpjA0ks2MI/AAAAAAAABcI/J6ViH98_poM/s144-c/IMG_6517.jpg",
-	        "http://lh3.ggpht.com/_rfAz5DWHZYs/S9cLAeKuueI/AAAAAAAAeYU/E19G8DOlJRo/s144-c/DSC_4397_8_9_tonemapped2.jpg",
-	        "http://lh4.ggpht.com/_TQY-Nm7P7Jc/TBpi6rKfFII/AAAAAAAABbg/79FOc0Dbq0c/s144-c/david_lee_sakura.jpg",
-	        "http://lh3.ggpht.com/_TQY-Nm7P7Jc/TBpi8EJ4eDI/AAAAAAAABb0/AZ8Cw1GCaIs/s144-c/Hokkaido%20Swans.jpg",
-	        "http://lh3.ggpht.com/_1aZMSFkxSJI/TCIjB6od89I/AAAAAAAACHM/CLWrkH0ziII/s144-c/079.jpg",
-	        "http://lh5.ggpht.com/_loGyjar4MMI/S-InWuHkR9I/AAAAAAAADJE/wD-XdmF7yUQ/s144-c/Colorado%20River%20Sunset.jpg",
-	        "http://lh3.ggpht.com/_0YSlK3HfZDQ/TCExCG1Zc3I/AAAAAAAAX1w/9oCH47V6uIQ/s144-c/3138923889_a7fa89cf94_o.jpg",
-	        "http://lh6.ggpht.com/_K29ox9DWiaM/TAXe4Fi0xTI/AAAAAAAAVIY/zZA2Qqt2HG0/s144-c/IMG_7100.JPG",
-	        "http://lh6.ggpht.com/_0YSlK3HfZDQ/TCEx16nJqpI/AAAAAAAAX1c/R5Vkzb8l7yo/s144-c/4235400281_34d87a1e0a_o.jpg",
-	        "http://lh4.ggpht.com/_8zSk3OGcpP4/TBsOVXXnkTI/AAAAAAAAAEo/0AwEmuqvboo/s144-c/yosemite_forrest.jpg",
-	        "http://lh4.ggpht.com/_6_dLVKawGJA/SLZToqXXVrI/AAAAAAAAG5k/7fPSz_ldN9w/s144-c/coastal-1.jpg",
-	        "http://lh4.ggpht.com/_WW8gsdKXVXI/TBpVr9i6BxI/AAAAAAABhNg/KC8aAJ0wVyk/s144-c/IMG_6233_1_2-2.jpg",
-	        "http://lh3.ggpht.com/_loGyjar4MMI/S-InS0tJJSI/AAAAAAAADHU/E8GQJ_qII58/s144-c/Windmills.jpg",
-	        "http://lh4.ggpht.com/_loGyjar4MMI/S-InbXaME3I/AAAAAAAADHo/4gNYkbxemFM/s144-c/Frantic.jpg",
-	        "http://lh5.ggpht.com/_loGyjar4MMI/S-InKAviXzI/AAAAAAAADHA/NkyP5Gge8eQ/s144-c/Rice%20Fields.jpg",
-	        "http://lh3.ggpht.com/_loGyjar4MMI/S-InZA8YsZI/AAAAAAAADH8/csssVxalPcc/s144-c/Seahorse.jpg",
-	        "http://lh3.ggpht.com/_syQa1hJRWGY/TBwkCHcq6aI/AAAAAAABBEg/R5KU1WWq59E/s144-c/Antelope.JPG",
-	        "http://lh5.ggpht.com/_MoEPoevCLZc/S9fHzNgdKDI/AAAAAAAADwE/UAno6j5StAs/s144-c/c84_7083.jpg",
-	        "http://lh4.ggpht.com/_DJGvVWd7IEc/TBpRsGjdAyI/AAAAAAAAFNw/rdvyRDgUD8A/s144-c/Free.jpg",
-	        "http://lh6.ggpht.com/_iO97DXC99NY/TBwq3_kmp9I/AAAAAAABcz0/apq1ffo_MZo/s144-c/IMG_0682_cp.jpg",
-	        "http://lh4.ggpht.com/_7V85eCJY_fg/TBpXudG4_PI/AAAAAAAAPEE/8cHJ7G84TkM/s144-c/20100530_120257_0273-Edit-2.jpg"
-	    };
-	    
+	private static final File imagesDirectory = Storage.getImagesDirectory();
 
-	    @Override
-	    public void onCreate(Bundle savedInstanceState) {
-	        super.onCreate(savedInstanceState);
-	        setContentView(R.layout.image_detail_pager); // Contains just a ViewPager
+	// Get max available VM memory, exceeding this amount will throw an
+	// OutOfMemory exception. Stored in kilobytes as LruCache takes an
+	// int in its constructor.
+	final int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
 
-	        mAdapter = new ImagePagerAdapter(getSupportFragmentManager(), URLS.length);
-	        mPager = (ViewPager) findViewById(R.id.pager);
-	        mPager.setAdapter(mAdapter);
-	    }
+	// Use 1/8th of the available memory for this memory cache.
+	final int cacheSize = maxMemory / 8;
 
-	    public static class ImagePagerAdapter extends FragmentStatePagerAdapter {
-	        private final int mSize;
+	// A static dataset to back the ViewPager adapter
+	public static File[] fileList;
 
-	        public ImagePagerAdapter(FragmentManager fm, int size) {
-	            super(fm);
-	            mSize = size;
-	        }
+	private ImagePagerAdapter mAdapter;
+	private ViewPager mPager;
 
-	        @Override
-	        public int getCount() {
-	            return mSize;
-	        }
+	public void loadBitmap(File path, ImageView mImageView) {
+		final String key = path.getName();
+		
+		final Bitmap bitmap = mMemoryCache.get(key);
+		if(bitmap!=null)
+			mImageView.setImageBitmap(bitmap);
+		else{
+			mImageView.setImageResource(R.drawable.image_placeholder);
+			BitmapWorkerTask task = new BitmapWorkerTask(mImageView);
+			task.execute(path);
+		}
+	}
 
-	        @Override
-	        public Fragment getItem(int position) {
-	            return ImageDetailFragment.newInstance(position);
-	        }
-	    }
+	public void addBitmapToMemoryCache(String key, Bitmap bitmap) {
+		if (mMemoryCache.get(key) == null) {
+			mMemoryCache.put(key, bitmap);
+		}
+	}
+
+
+	private static BitmapWorkerTask getBitmapWorkerTask(ImageView imageView) {
+		if (imageView != null) {
+			final Drawable drawable = imageView.getDrawable();
+			if (drawable instanceof AsyncDrawable) {
+				final AsyncDrawable asyncDrawable = (AsyncDrawable) drawable;
+				return asyncDrawable.getBitmapWorkerTask();
+			}
+		}
+		return null;
+	}
+
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		fileList = Storage.getFilesList(imagesDirectory);
+
+		/* INITIALIZE MEMORY CACHE */
+		mMemoryCache = new LruCache<String, Bitmap>(cacheSize) {
+			@Override
+			protected int sizeOf(String key, Bitmap bitmap) {
+				// The cache size will be measured in kilobytes rather than
+				// number of items.
+				return bitmap.getByteCount() / 1024;
+			}
+		};
+
+		/* INITIALIZE DISK CACHE */
+		File cacheDir = Storage.getDiskCacheDir(DISK_CACHE_SUBDIR);
+		new InitDiskCacheTask().execute(cacheDir);
+
+		setContentView(R.layout.image_detail_pager); // Contains just a
+														// ViewPager
+
+		mAdapter = new ImagePagerAdapter(getSupportFragmentManager(),fileList.length);
+		mPager = (ViewPager) findViewById(R.id.pager);
+		mPager.setAdapter(mAdapter);
+	}
+
+	
+	public static class ImagePagerAdapter extends FragmentStatePagerAdapter {
+		private final int mSize;
+
+		public ImagePagerAdapter(FragmentManager fm, int size) {
+			super(fm);
+			mSize = size;
+		}
+
+		@Override
+		public int getCount() {
+			return mSize;
+		}
+
+		@Override
+		public Fragment getItem(int position) {
+			return ImageDetailFragment.newInstance(position);
+		}
+	}
+
+	static class AsyncDrawable extends BitmapDrawable {
+		private final WeakReference<BitmapWorkerTask> bitmapWorkerTaskReference;
+
+		public AsyncDrawable(Resources res, Bitmap bitmap,
+				BitmapWorkerTask bitmapWorkerTask) {
+			super(res, bitmap);
+			bitmapWorkerTaskReference = new WeakReference<BitmapWorkerTask>(
+					bitmapWorkerTask);
+		}
+
+		public BitmapWorkerTask getBitmapWorkerTask() {
+			return bitmapWorkerTaskReference.get();
+		}
+	}
+
+	class BitmapWorkerTask extends AsyncTask<File, Void, Bitmap> {
+		private final WeakReference<ImageView> imageViewReference;
+		private File file;
+
+		public BitmapWorkerTask(ImageView imageView) {
+			// Use a WeakReference to ensure the ImageView can be garbage
+			// collected
+			imageViewReference = new WeakReference<ImageView>(imageView);
+		}
+
+		// Decode image in background.
+		@Override
+		protected Bitmap doInBackground(File... params) {
+			file = params[0];
+			final String imageKey = file.getName();
+
+			// Check disk cache in background thread
+			Bitmap bitmap = getBitmapFromDiskCache(imageKey);
+			if (bitmap == null) { // Not found in disk cache
+				bitmap = BitmapCalc.decodeSampleBitmapFromFile(
+						file.getAbsolutePath(), IMG_W, IMG_H);
+			}
+			// add final bitmap to caches
+			addBitmapToCache(imageKey, bitmap);
+			return bitmap;
+		}
+		
+
+		public void addBitmapToCache(String key, Bitmap bitmap) {
+			// Add to memory cache as before
+			if (mMemoryCache.get(key)== null) {
+				mMemoryCache.put(key, bitmap);
+			}
+
+			// Also add to disk cache
+			synchronized (mDiskCacheLock) {
+				if (mDiskLruCache != null
+						&& mDiskLruCache.getBitmap(key) == null) {
+					mDiskLruCache.put(key, bitmap);
+				}
+			}
+		}
+
+		public Bitmap getBitmapFromDiskCache(String key) {
+			synchronized (mDiskCacheLock) {
+				// Wait while disk cache is started from background thread
+				while (mDiskCacheStarting) {
+					try {
+						mDiskCacheLock.wait();
+					} catch (InterruptedException e) {
+					}
+				}
+				if (mDiskLruCache != null) {
+					return mDiskLruCache.getBitmap(key);
+				}
+			}
+			return null;
+		}
+
+		// Once complete, see if ImageView is still around and set bitmap.
+		@Override
+		protected void onPostExecute(Bitmap bitmap) {
+			if (isCancelled()) {
+				bitmap = null;
+			}
+
+			if (imageViewReference != null && bitmap != null) {
+				final ImageView imageView = imageViewReference.get();
+				final BitmapWorkerTask bitmapWorkerTask = getBitmapWorkerTask(imageView);
+				if (/*this == bitmapWorkerTask &&*/ imageView != null) {
+					imageView.setImageBitmap(bitmap);
+				}
+			}
+		}
+	}
+
+	class InitDiskCacheTask extends AsyncTask<File, Void, Void> {
+		@Override
+		protected Void doInBackground(File... params) {
+			synchronized (mDiskCacheLock) {
+				File cacheDir = params[0];
+				mDiskLruCache = new DiskLruImageCache(cacheDir,
+						DISK_CACHE_SIZE, CompressFormat.JPEG, 100);
+				mDiskCacheStarting = false; // Finished initialization
+				mDiskCacheLock.notifyAll(); // Wake any waiting threads
+			}
+			return null;
+		}
+	}
 }

@@ -13,6 +13,7 @@ import android.os.AsyncTask;
 import android.support.v4.util.LruCache;
 import android.widget.ImageView;
 
+import com.example.app_1.App_1;
 import com.example.app_1.R;
 import com.example.utils.BitmapCalc;
 import com.example.utils.DiskLruImageCache;
@@ -42,12 +43,9 @@ public class ImageLoader {
 
 	private LruCache<String, Bitmap> mMemoryCache;
 	
-	private ImageLoader(){
-	}
-
-	public ImageLoader(Context c) {
-		this.context = c;
-		mPlaceHolderBitmap = BitmapCalc.decodeSampleBitmapFromResources(context.getResources(), R.drawable.image_placeholder, 100, 100);
+	public ImageLoader() {
+		context = App_1.getAppContext();
+		mPlaceHolderBitmap = BitmapCalc.decodeSampleBitmapFromResources(App_1.getAppContext().getResources(), R.drawable.image_placeholder, 100, 100);
 		
 		/* INITIALIZE MEMORY CACHE */
 		mMemoryCache = new LruCache<String, Bitmap>(cacheSize) {

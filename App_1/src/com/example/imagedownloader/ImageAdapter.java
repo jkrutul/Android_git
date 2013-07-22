@@ -16,8 +16,10 @@
 
 package com.example.imagedownloader;
 
-import android.app.Activity;
-import android.content.Context;
+import java.io.File;
+
+import com.example.utils.Storage;
+
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -27,11 +29,13 @@ import android.widget.ImageView;
 
 public class ImageAdapter extends BaseAdapter {
 
-
+	private File[] fileList;
+	
     private static final String[] URLS = {
-    	"http://ns223506.ovh.net/rozne/73ab571abe460628142794b5f59c8d3e/wallpaper-2923580.jpg",
-    	"http://ns223506.ovh.net/rozne/8ca992d2c420e0818df37727839ce3e3/wallpaper-2911870.jpg",
-    	"http://ns223506.ovh.net/rozne/0a74efea86d03c2d3430a0f1ab298f10/wallpaper-2912041.jpg",
+    	"http://neolodger.files.wordpress.com/2013/04/the_elder_scrolls_v_skyrim-wide.jpg",
+    	"http://s2.blomedia.pl/gadzetomania.pl/images/2012/12/003-skyrim-331892.jpg",
+    	"http://images1.wikia.nocookie.net/__cb20111009095221/elderscrolls/images/0/08/Map_of_skyrim_bintoenglish.jpg",
+    	"http://img6.gram.pl/120111110073349.jpg",
         "http://lh5.ggpht.com/_mrb7w4gF8Ds/TCpetKSqM1I/AAAAAAAAD2c/Qef6Gsqf12Y/s144-c/_DSC4374%20copy.jpg",
         "http://lh5.ggpht.com/_Z6tbBnE-swM/TB0CryLkiLI/AAAAAAAAVSo/n6B78hsDUz4/s144-c/_DSC3454.jpg",
         "http://lh3.ggpht.com/_GEnSvSHk4iE/TDSfmyCfn0I/AAAAAAAAF8Y/cqmhEoxbwys/s144-c/_MG_3675.jpg",
@@ -85,6 +89,14 @@ public class ImageAdapter extends BaseAdapter {
     };
 
     private final ImageDownloader imageDownloader = new ImageDownloader();
+    
+    public ImageAdapter(){
+    	
+    }
+    
+    public ImageAdapter(File path){
+    	this.fileList = Storage.getFilesList(path);
+    }
     
     public int getCount() {
         return URLS.length;

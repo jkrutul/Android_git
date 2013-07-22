@@ -72,11 +72,12 @@ public class ImageDownloader {
 	private DiskLruImageCache mDiskLruCache;
 	private final Object mDiskCacheLock = new Object();
 	private boolean mDiskCacheStarting = true;
-	private static final int DISK_CACHE_SIZE = 1024 * 1024 * 10; // 10MB
-	private static final String DISK_CACHE_SUBDIR = "thumbnails1";
-	private static final String IMG_DIR = "images1";
-	private static final int IMG_W = 20;
-	private static final int IMG_H = 20;
+	private static final int DISK_CACHE_SIZE = 1024 * 1024 * 1; // 1MB
+
+	String ResDiskCacheDir;
+
+	private static final int IMG_W = 500;
+	private static final int IMG_H = 500;
 	private static int JPG_QUALITY = 100;
 	final int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
 	final int cacheSize = maxMemory / 8;
@@ -87,14 +88,8 @@ public class ImageDownloader {
 
 	
 	public ImageDownloader(){
-		imagesDirectory = new File(Storage.getAppRootDir()+File.separator+IMG_DIR);
-		if (!imagesDirectory.getParentFile().mkdirs()) {
-			Log.e("TAG", "Directory not created");
-			
-		}
-		Log.d(LOG_TAG,"imageDirectory "+imagesDirectory.getAbsolutePath());
+		imagesDirectory = Storage.getImagesDirectory();
 		
-
 // INIT MEMORY AND DISK CACHE--------------------------------------------
 		mMemoryCache = new LruCache<String, Bitmap>(cacheSize) {
 			@Override
@@ -103,7 +98,7 @@ public class ImageDownloader {
 			}
 		};
 		
-	    File diskCacheDir = Storage.getDiskCacheDir(DISK_CACHE_SUBDIR);
+	    File diskCacheDir = Storage.getDiskCacheDirectory(IMG_W, IMG_H);
 	    Log.d(LOG_TAG, "DISK cache Dir: "+ diskCacheDir);
 	    new InitDiskCacheTask().execute(diskCacheDir);
 	    
@@ -335,7 +330,7 @@ public class ImageDownloader {
 		
 	    public void addBitmapToCache(String key, Bitmap bitmap) {
 	        // Add to memory cache as before
-	        if (getBitmapFromMemCache(key) == null) {
+	        if (mMemoryCache.get(key) == null) {
 	            mMemoryCache.put(key, bitmap);
 	        }
 
@@ -407,12 +402,6 @@ public class ImageDownloader {
 	
 	
 	/* C A C H E */
-
-	
-	public Bitmap getBitmapFromMemCache(String key) {
-		return mMemoryCache.get(key);
-	}
-	
 
 	class InitDiskCacheTask extends AsyncTask<File, Void, Void> {
 	    @Override

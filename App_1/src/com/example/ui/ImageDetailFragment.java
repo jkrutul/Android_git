@@ -1,6 +1,6 @@
 package com.example.ui;
 
-import com.example.app_1.R;
+import java.io.File;
 
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -8,6 +8,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+
+import com.example.app_1.R;
 
 
 
@@ -45,7 +47,15 @@ public class ImageDetailFragment extends Fragment {
 	    @Override
 	    public void onActivityCreated(Bundle savedInstanceState) {
 	        super.onActivityCreated(savedInstanceState);
-	        String url = ImageDetailActivity.URLS[mImageNum];
+	        	        
+	        if(ImageDetailActivity.class.isInstance(getActivity())){
+	        	final File path= ImageDetailActivity.fileList[mImageNum];
+	        	// Call out to ImageDetailActivity to load the bitmap in background thread
+	        	
+	        	((ImageDetailActivity) getActivity()).loadBitmap(path, mImageView);
+	        	
+	        	
+	        }
 	        // TODO
 	        //mImageView.setImageResource(url); // Load image into ImageView
 	    }
