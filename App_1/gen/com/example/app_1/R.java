@@ -25,9 +25,9 @@ public final class R {
         public static final int image_placeholder=0x7f020001;
     }
     public static final class id {
-        public static final int action_settings=0x7f08001a;
+        public static final int action_settings=0x7f08001b;
         public static final int article=0x7f080014;
-        public static final int article_fragment=0x7f080019;
+        public static final int article_fragment=0x7f08001a;
         public static final int bntSpeak=0x7f080013;
         public static final int button_open=0x7f08000e;
         public static final int button_save=0x7f08000d;
@@ -39,12 +39,13 @@ public final class R {
         public static final int file_name=0x7f08000b;
         public static final int find_file=0x7f080010;
         public static final int finish_button=0x7f080005;
-        public static final int fragment_container=0x7f080017;
-        public static final int headlines_fragment=0x7f080018;
+        public static final int fragment_container=0x7f080018;
+        public static final int gridView=0x7f080017;
+        public static final int headlines_fragment=0x7f080019;
         public static final int imageViewForFragment=0x7f080015;
         public static final int image_from_net=0x7f080008;
         public static final int list_view=0x7f080000;
-        public static final int menu_item_share=0x7f08001b;
+        public static final int menu_item_share=0x7f08001c;
         public static final int pager=0x7f080016;
         public static final int picture_image=0x7f080007;
         public static final int send_button=0x7f080006;
@@ -66,7 +67,8 @@ public final class R {
         public static final int article_view=0x7f030008;
         public static final int image_detail_fragment=0x7f030009;
         public static final int image_detail_pager=0x7f03000a;
-        public static final int news_articles=0x7f03000b;
+        public static final int image_grid_fragment=0x7f03000b;
+        public static final int news_articles=0x7f03000c;
     }
     public static final class menu {
         public static final int main=0x7f070000;

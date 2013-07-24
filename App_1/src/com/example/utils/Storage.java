@@ -27,6 +27,7 @@ public class Storage {
 	public static final String IMG_DIR = "Images";
 	public static final String DISK_CACHE_SUBDIR = "thumbnails";
 	
+	
     public static final int IO_BUFFER_SIZE = 8 * 1024;
 
 	/* INTERNAL ------------------------------------------------------------------------------------------------------*/

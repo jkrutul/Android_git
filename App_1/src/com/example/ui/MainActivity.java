@@ -252,6 +252,12 @@ public class MainActivity extends Activity {
 		Intent intent = new Intent(this, ImageDetailActivity.class);
 		startActivity(intent);
 	}
+	
+	public void gotoImageGridActivity(View view){
+		Intent intent = new Intent(this, ImageGridActivity.class);
+		startActivity(intent);
+	}
+	
 	// ACTIVITIES FOR RESULT
 	public void takePicture(View view) {
 		Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);

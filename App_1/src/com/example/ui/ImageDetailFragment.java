@@ -49,7 +49,7 @@ public class ImageDetailFragment extends Fragment {
 	        super.onActivityCreated(savedInstanceState);
 	        	        
 	        if(ImageDetailActivity.class.isInstance(getActivity())){
-	        	final File path= ImageDetailActivity.fileList[mImageNum];
+	        	final File path= ImageDetailActivity.ImagePagerAdapter.fileList[mImageNum];
 	        	// Call out to ImageDetailActivity to load the bitmap in background thread
 	        	
 	        	((ImageDetailActivity) getActivity()).loadBitmap(path, mImageView);

@@ -28,16 +28,22 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 
+import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
+import android.app.Activity;
+import android.app.Fragment;
+import android.app.FragmentManager;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.CompressFormat;
 import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.http.AndroidHttpClient;
 import android.os.AsyncTask;
+import android.os.Build;
+import android.os.Bundle;
 import android.support.v4.util.LruCache;
 import android.util.Log;
 import android.widget.ImageView;
@@ -72,7 +78,7 @@ public class ImageDownloader {
 	private DiskLruImageCache mDiskLruCache;
 	private final Object mDiskCacheLock = new Object();
 	private boolean mDiskCacheStarting = true;
-	private static final int DISK_CACHE_SIZE = 1024 * 1024 * 1; // 1MB
+	private static final int DISK_CACHE_SIZE = 1024 * 1024 * 20; // 20MB
 
 	String ResDiskCacheDir;
 
@@ -83,20 +89,36 @@ public class ImageDownloader {
 	final int cacheSize = maxMemory / 8;
 	private LruCache<String, Bitmap> mMemoryCache;
 	
+	private static boolean withRetainFragment = true;
 	
 	
-
-	
-	public ImageDownloader(){
-		imagesDirectory = Storage.getImagesDirectory();
+	private ImageDownloader(){
 		
-// INIT MEMORY AND DISK CACHE--------------------------------------------
-		mMemoryCache = new LruCache<String, Bitmap>(cacheSize) {
-			@Override
-			protected int sizeOf(String key, Bitmap bitmap) {
-				return bitmap.getByteCount() / 1024;
+	}
+	
+	public ImageDownloader(Activity actv){
+		imagesDirectory = Storage.getImagesDirectory();
+		if(withRetainFragment){
+			RetainFragment mRetainFragment = RetainFragment.findOrCreateRetainFragment(actv.getFragmentManager());
+			mMemoryCache = RetainFragment.mRetainedCache;
+			if (mMemoryCache == null) {
+				mMemoryCache = new LruCache<String, Bitmap>(cacheSize) {
+					@Override
+					protected int sizeOf(String key, Bitmap bitmap) {
+						return bitmap.getByteCount() / 1024;
+					}
+	
+				};
+				mRetainFragment.mRetainedCache = mMemoryCache;
 			}
-		};
+		}else{
+			mMemoryCache = new LruCache<String, Bitmap>(cacheSize) {
+				@Override
+				protected int sizeOf(String key, Bitmap bitmap) {
+					return bitmap.getByteCount() / 1024;
+				}
+			};
+		}
 		
 	    File diskCacheDir = Storage.getDiskCacheDirectory(IMG_W, IMG_H);
 	    Log.d(LOG_TAG, "DISK cache Dir: "+ diskCacheDir);
@@ -120,16 +142,6 @@ public class ImageDownloader {
 	 *            The ImageView to bind the downloaded image to.
 	 */
 	public void download(String url, ImageView imageView) {
-		/*
-		Bitmap bitmap = getBitmapFromDiskCache(key)(url);
-
-		if (bitmap == null) {
-			forceDownload(url, imageView);
-		} else {
-			cancelPotentialDownload(url, imageView);
-			imageView.setImageBitmap(bitmap);
-		}
-		*/
 		if (url == null) {
 			imageView.setImageDrawable(null);
 			return;
@@ -296,12 +308,6 @@ public class ImageDownloader {
 						Log.d("cache", imageName+" - has been resized and add to cache, size:"+ b.getByteCount()/1024+"kB");
 						return b;
 						
-						/*	
-						b = BitmapFactory.decodeFile(extFile.getAbsolutePath());
-						Log.d("SD", imageName+" -already exist");
-				        addBitmapToCache(imageName, b);
-						return b;
-						*/
 		        	}
 					else{ 
 						b = downloadBitmap(url);
@@ -416,4 +422,30 @@ public class ImageDownloader {
 	    }
 	}
 
+	@SuppressLint("ValidFragment")
+	@TargetApi(Build.VERSION_CODES.HONEYCOMB)
+	static class RetainFragment extends Fragment {
+		private static final String TAG = "RetainFragment";
+		public static LruCache<String, Bitmap> mRetainedCache;
+
+		public RetainFragment() {
+		}
+
+		public static RetainFragment findOrCreateRetainFragment(
+				FragmentManager fm) {
+			RetainFragment fragment = (RetainFragment) fm
+					.findFragmentByTag(TAG);
+			if (fragment == null) {
+				fragment = new RetainFragment();
+			}
+			return fragment;
+		}
+
+		@Override
+		public void onCreate(Bundle savedInstanceState) {
+			super.onCreate(savedInstanceState);
+			setRetainInstance(true);
+		}
+
+	}
 }

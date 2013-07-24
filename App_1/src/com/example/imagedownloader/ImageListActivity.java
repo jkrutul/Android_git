@@ -31,7 +31,7 @@ public class ImageListActivity extends ListActivity {
         super.onCreate(savedInstanceState);
         
         setContentView(R.layout.activity_imagelist);
-        setListAdapter(new ImageAdapter());
+        setListAdapter(new ImageAdapter(this));
     }
     
 	@Override
