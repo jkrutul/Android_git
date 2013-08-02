@@ -40,7 +40,7 @@ public class ImageDetailFragment extends Fragment {
 	            Bundle savedInstanceState) {
 	        // image_detail_fragment.xml contains just an ImageView
 	        final View v = inflater.inflate(R.layout.image_detail_fragment, container, false);
-	        mImageView = (ImageView) v.findViewById(R.id.imageViewForFragment);
+	        mImageView = (ImageView) v.findViewById(R.id.imageView);
 	        return v;
 	    }
 

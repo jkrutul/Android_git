@@ -254,7 +254,7 @@ public class MainActivity extends Activity {
 	}
 	
 	public void gotoImageGridActivity(View view){
-		Intent intent = new Intent(this, ImageGridActivity.class);
+		Intent intent = new Intent(this, com.example.bitmapfun.ui.ImageGridActivity.class);
 		startActivity(intent);
 	}
 	
