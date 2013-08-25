@@ -34,36 +34,39 @@ public final class R {
         public static final int photogrid_list_selector=0x7f020003;
     }
     public static final class id {
-        public static final int action_settings=0x7f09001b;
-        public static final int article=0x7f090014;
-        public static final int article_fragment=0x7f09001a;
-        public static final int bntSpeak=0x7f090013;
+        public static final int action_settings=0x7f09001e;
+        public static final int add=0x7f090013;
+        public static final int article=0x7f090017;
+        public static final int article_fragment=0x7f09001d;
+        public static final int bntSpeak=0x7f090016;
         public static final int button_open=0x7f09000e;
         public static final int button_save=0x7f09000d;
-        public static final int clear_cache=0x7f09001d;
+        public static final int clear_cache=0x7f090020;
         public static final int console=0x7f090004;
         public static final int db_console=0x7f090001;
+        public static final int delete=0x7f090014;
         public static final int delete_file=0x7f09000f;
         public static final int edit_message=0x7f090003;
         public static final int file_content=0x7f09000c;
         public static final int file_name=0x7f09000b;
         public static final int find_file=0x7f090010;
         public static final int finish_button=0x7f090005;
-        public static final int fragment_container=0x7f090018;
-        public static final int gridView=0x7f090017;
-        public static final int headlines_fragment=0x7f090019;
-        public static final int imageView=0x7f090015;
+        public static final int fragment_container=0x7f09001b;
+        public static final int gridView=0x7f09001a;
+        public static final int group=0x7f090012;
+        public static final int headlines_fragment=0x7f09001c;
+        public static final int imageView=0x7f090018;
         public static final int image_from_net=0x7f090008;
         public static final int list_view=0x7f090000;
-        public static final int menu_item_share=0x7f09001c;
-        public static final int pager=0x7f090016;
+        public static final int menu_item_share=0x7f09001f;
+        public static final int pager=0x7f090019;
         public static final int picture_image=0x7f090007;
         public static final int send_button=0x7f090006;
         public static final int shared_image=0x7f09000a;
         public static final int shared_message=0x7f090009;
         public static final int storage_detail=0x7f090011;
         public static final int text_message=0x7f090002;
-        public static final int txtText=0x7f090012;
+        public static final int txtText=0x7f090015;
     }
     public static final class layout {
         public static final int activity_bitmaps=0x7f030000;
@@ -73,12 +76,13 @@ public final class R {
         public static final int activity_main=0x7f030004;
         public static final int activity_share=0x7f030005;
         public static final int activity_storage=0x7f030006;
-        public static final int activity_tts=0x7f030007;
-        public static final int article_view=0x7f030008;
-        public static final int image_detail_fragment=0x7f030009;
-        public static final int image_detail_pager=0x7f03000a;
-        public static final int image_grid_fragment=0x7f03000b;
-        public static final int news_articles=0x7f03000c;
+        public static final int activity_test_db=0x7f030007;
+        public static final int activity_tts=0x7f030008;
+        public static final int article_view=0x7f030009;
+        public static final int image_detail_fragment=0x7f03000a;
+        public static final int image_detail_pager=0x7f03000b;
+        public static final int image_grid_fragment=0x7f03000c;
+        public static final int news_articles=0x7f03000d;
     }
     public static final class menu {
         public static final int main=0x7f080000;

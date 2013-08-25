@@ -1,4 +1,4 @@
-package com.example.app_1;
+package com.example.models;
 
 public class MyObject {
 	private String name;

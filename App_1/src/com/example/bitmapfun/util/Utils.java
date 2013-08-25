@@ -16,8 +16,8 @@
 
 package com.example.bitmapfun.util;
 
-import com.example.bitmapfun.ui.ImageDetailActivity;
-import com.example.bitmapfun.ui.ImageGridActivity;
+import com.example.ui.ImageDetailActivity;
+import com.example.ui.ImageGridActivity;
 
 import android.annotation.TargetApi;
 import android.os.Build;

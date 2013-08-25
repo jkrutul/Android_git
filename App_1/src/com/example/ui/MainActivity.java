@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.Calendar;
 import java.util.List;
 
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
@@ -34,8 +35,10 @@ import com.example.app_1.R;
 import com.example.imagedownloader.ImageListActivity;
 import com.example.imageloader.ImageLoader;
 import com.example.utils.BitmapCalc;
+import com.example.utils.MyDBAdapter;
 import com.example.utils.Storage;
 
+@SuppressLint("NewApi")
 public class MainActivity extends Activity {
 	public final static String EXTRA_MESSAGE = "com.example.app_1.MESSAGE";
 	public static final int PIC_CONATC_REQUEST = 1; // The request code
@@ -254,7 +257,7 @@ public class MainActivity extends Activity {
 	}
 	
 	public void gotoImageGridActivity(View view){
-		Intent intent = new Intent(this, com.example.bitmapfun.ui.ImageGridActivity.class);
+		Intent intent = new Intent(this, com.example.ui.ImageGridActivity.class);
 		startActivity(intent);
 	}
 	
@@ -280,6 +283,16 @@ public class MainActivity extends Activity {
 		pickContactIntent.setType(Phone.CONTENT_TYPE);
 		if (verifyResolves(pickContactIntent))
 			startActivityForResult(pickContactIntent, PIC_CONATC_REQUEST);
+	}
+	
+	public void recreateDB(View view){
+		MyDBAdapter db = MyDBAdapter.getInstance();
+		db.recreateDB();
+	}
+	
+	public void gotoTestDB(View view){
+		Intent intent = new Intent(this, com.example.ui.DatabaseTestActivity.class);
+		startActivity(intent);
 	}
 
 	@Override

@@ -11,8 +11,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.EditText;
 
-import com.example.app_1.MyObject;
 import com.example.app_1.R;
+import com.example.models.MyObject;
 import com.example.utils.MyDBAdapter;
 
 public class DatabaseActivity extends Activity{
@@ -31,23 +31,38 @@ public class DatabaseActivity extends Activity{
 		// Show the Up button in the action bar.
 		setupActionBar();
 		
-		myDBAdapter = new MyDBAdapter(this);
+		myDBAdapter = MyDBAdapter.getInstance();
 		myDBAdapter.open();
+		/*
 		myDBAdapter.insertEntry(new MyObject("jacek1"));
 		myDBAdapter.insertEntry(new MyObject("jacek2"));
 		myDBAdapter.insertEntry(new MyObject("jacek3"));
+		*/
 		
 		EditText editText = (EditText) findViewById(R.id.db_console);
-		myObjectCursor = myDBAdapter.getAllEntries();
+		
+		/*myObjectCursor = myDBAdapter.getAllImages();
 		myObjectCursor.requery();
+		String key_id, path, audio, desc, cat;
 		if(myObjectCursor.moveToFirst()){
-			do{
-				String name =  myObjectCursor.getString(MyDBAdapter.NAME_COLUMN);
-				editText.append("\n"+name);
+			do{//KEY_ID, COL_PATH, COL_AUDIO_PATH, COL_DESC, COL_CAT
+				key_id =  myObjectCursor.getString(0);
+				editText.append("\n"+key_id);
+				path =  myObjectCursor.getString(1);
+				editText.append("\n"+path);
+				audio =  myObjectCursor.getString(2);
+				editText.append("\n"+audio);
+				desc =  myObjectCursor.getString(3);
+				editText.append("\n"+desc);
+				cat =  myObjectCursor.getString(4);
+				editText.append("\n"+cat);
 				
+				editText.append("\n");
 			}while(myObjectCursor.moveToNext());
+			myObjectCursor.close();
 			
 		}
+		*/
 		
 		//populateMyObjectList();
 	}
@@ -94,25 +109,25 @@ public class DatabaseActivity extends Activity{
 	}
 
 	private void populateMyObjectList(){
-		myObjectCursor = myDBAdapter.getAllEntries();
-		startManagingCursor(myObjectCursor);
+		//myObjectCursor = myDBAdapter.getAllEntries();
+		//startManagingCursor(myObjectCursor);
 		
 		updateArray();
 	}
 	
 	private void updateArray(){
-		myObjectCursor.requery();
+		//myObjectCursor.requery();
 		
-		if(myObjectCursor.moveToFirst()){
-			do{
-				String name =  myObjectCursor.getString(MyDBAdapter.NAME_COLUMN);
-				MyObject myObject = new MyObject(name);
+		//if(myObjectCursor.moveToFirst()){
+		//	do{
+		//		String name =  myObjectCursor.getString(MyDBAdapter.NAME_COLUMN);
+		//		MyObject myObject = new MyObject(name);
 				
-			}while(myObjectCursor.moveToNext());
+		//	}while(myObjectCursor.moveToNext());
 			
 		}
 		
-	}
+	
 	
 	/***
  * 	public void putIntoDb(String id, String title, String subtitle){

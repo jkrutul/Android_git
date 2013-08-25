@@ -30,6 +30,7 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
@@ -37,6 +38,9 @@ import java.net.URL;
 
 import com.example.app_1.BuildConfig;
 import com.example.app_1.R;
+import com.example.models.MyImageObject;
+import com.example.utils.MyDBAdapter;
+import com.example.utils.Storage;
 
 /**
  * A simple subclass of {@link ImageResizer} that fetches and resizes images fetched from a URL.
@@ -212,8 +216,7 @@ public class ImageFetcher extends ImageResizer {
                         }
                         DiskLruCache.Editor editor = mHttpDiskCache.edit(key);
                         if (editor != null) {
-                            if (downloadUrlToStream(data,
-                                    editor.newOutputStream(DISK_CACHE_INDEX))) {
+                            if (downloadUrlToStream(data,editor.newOutputStream(DISK_CACHE_INDEX))) {
                                 editor.commit();
                             } else {
                                 editor.abort();
@@ -269,16 +272,20 @@ public class ImageFetcher extends ImageResizer {
         HttpURLConnection urlConnection = null;
         BufferedOutputStream out = null;
         BufferedInputStream in = null;
+        BufferedOutputStream outIMG = null;
 
         try {
             final URL url = new URL(urlString);
             urlConnection = (HttpURLConnection) url.openConnection();
             in = new BufferedInputStream(urlConnection.getInputStream(), IO_BUFFER_SIZE);
             out = new BufferedOutputStream(outputStream, IO_BUFFER_SIZE);
+            FileOutputStream newIMG= Storage.getFOS(urlString);
+            outIMG = new BufferedOutputStream(newIMG);
 
             int b;
             while ((b = in.read()) != -1) {
                 out.write(b);
+                outIMG.write(b);    
             }
             return true;
         } catch (final IOException e) {
@@ -288,8 +295,13 @@ public class ImageFetcher extends ImageResizer {
                 urlConnection.disconnect();
             }
             try {
-                if (out != null) {
+                if (out != null) {                	
                     out.close();
+                    outIMG.close();
+                	//TODO download
+                    Storage.addToDbImgEntry(urlString);
+         
+                    
                 }
                 if (in != null) {
                     in.close();

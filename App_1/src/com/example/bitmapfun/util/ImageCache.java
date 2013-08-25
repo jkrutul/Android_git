@@ -63,7 +63,7 @@ public class ImageCache {
 
     // Compression settings when writing images to disk cache
     private static final CompressFormat DEFAULT_COMPRESS_FORMAT = CompressFormat.JPEG;
-    private static final int DEFAULT_COMPRESS_QUALITY = 70;
+    private static final int DEFAULT_COMPRESS_QUALITY = 100;
     private static final int DISK_CACHE_INDEX = 0;
 
     // Constants to easily toggle various caches
@@ -99,8 +99,7 @@ public class ImageCache {
      * @param cacheParams The cache parameters to use if the ImageCache needs instantiation.
      * @return An existing retained ImageCache object or a new one if one did not exist
      */
-    public static ImageCache getInstance(
-            FragmentManager fragmentManager, ImageCacheParams cacheParams) {
+    public static ImageCache getInstance(FragmentManager fragmentManager, ImageCacheParams cacheParams) {
 
         // Search for, or create an instance of the non-UI RetainFragment
         final RetainFragment mRetainFragment = findOrCreateRetainFragment(fragmentManager);
@@ -244,8 +243,8 @@ public class ImageCache {
                         final DiskLruCache.Editor editor = mDiskLruCache.edit(key);
                         if (editor != null) {
                             out = editor.newOutputStream(DISK_CACHE_INDEX);
-                            value.getBitmap().compress(
-                                    mCacheParams.compressFormat, mCacheParams.compressQuality, out);
+                            value.getBitmap().compress(mCacheParams.compressFormat, mCacheParams.compressQuality, out);
+                            
                             editor.commit();
                             out.close();
                         }

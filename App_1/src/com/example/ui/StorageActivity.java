@@ -83,7 +83,7 @@ public class StorageActivity extends Activity {
 		String filename = editText.getText().toString();
 		String filecontent = editText2.getText().toString();
 		
-		if(Storage.writeToExternalFile(filename, filecontent.getBytes(), Environment.DIRECTORY_DOWNLOADS)){
+		if(Storage.writeToExternalFile(filename, filecontent.getBytes())){
 			textView.setText("save sucessfull");
 		}
 	}
@@ -95,7 +95,8 @@ public class StorageActivity extends Activity {
 		
 		
 		String filename = editText.getText().toString();
-		file_content= Storage.readFromExternalFile(filename, Environment.DIRECTORY_DOWNLOADS);
+		file_content= Storage.readFromExternalFile(filename);
+		
 		if(file_content!= null)
 			textView.setText(file_content);
 		else
@@ -107,10 +108,7 @@ public class StorageActivity extends Activity {
 		EditText editText = (EditText) findViewById(R.id.file_name);
 		TextView textView = (TextView) findViewById(R.id.storage_detail);
 		String filename = editText.getText().toString();
-		String file_content;
-		
-		file_content= Storage.readFromExternalFile(filename, Environment.DIRECTORY_DOWNLOADS);
-		if(file_content!= null)
+		if(Storage.isfileExist(filename)!=null)
 			textView.setText("FILE EXIST");
 		else
 			textView.setText("FILE NOT FOUND");
@@ -121,12 +119,12 @@ public class StorageActivity extends Activity {
 		EditText editText = (EditText) findViewById(R.id.file_name);
 		TextView textView = (TextView) findViewById(R.id.storage_detail);
 		String filename = editText.getText().toString();
-		
-		String file_content= Storage.readFromExternalFile(filename, Environment.DIRECTORY_DOWNLOADS);
-		if(file_content== null)
+
+		if(Storage.isfileExist(filename)==null)
 			textView.setText("FILE NOT FOUND");
+			
 		
-		if(Storage.deleteExtFile(filename, Environment.DIRECTORY_DOWNLOADS))
+		if(Storage.deleteExtFile(filename))
 			textView.setText("\""+filename+"\" was deleted");
 		else
 			textView.append("\""+filename+"\" wasn't deleted");

@@ -12,6 +12,7 @@
             android:id="@+id/edit_message"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
+            android:focusable="false"
             android:hint="@string/edit_message" />
 
         <LinearLayout
@@ -117,6 +118,18 @@
                 android:layout_height="wrap_content"
                 android:onClick="takePicture"
                 android:text="take picture" />
+            
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:onClick="recreateDB"
+                android:text="recreateDB" />
+            
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:onClick="gotoTestDB"
+                android:text="gotoTestDB" />
 
             <ImageView
                 android:id="@+id/picture_image"

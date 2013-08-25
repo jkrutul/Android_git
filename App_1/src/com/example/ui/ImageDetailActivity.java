@@ -1,284 +1,215 @@
+/*
+ * Copyright (C) 2012 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.example.ui;
 
-import java.io.File;
-import java.lang.ref.WeakReference;
-
-import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
-import android.app.Fragment;
-import android.app.FragmentManager;
-import android.content.res.Resources;
-import android.graphics.Bitmap;
-import android.graphics.Bitmap.CompressFormat;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
-import android.os.AsyncTask;
-import android.os.Build;
+import android.app.ActionBar;
 import android.os.Bundle;
-
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
-import android.support.v4.util.LruCache;
+import android.support.v4.app.NavUtils;
 import android.support.v4.view.ViewPager;
-import android.util.Log;
-import android.widget.ImageView;
+import android.util.DisplayMetrics;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.view.WindowManager.LayoutParams;
+import android.widget.Toast;
 
+import com.example.app_1.BuildConfig;
 import com.example.app_1.R;
-import com.example.utils.BitmapCalc;
-import com.example.utils.DiskLruImageCache;
-import com.example.utils.Storage;
+import com.example.bitmapfun.provider.Images;
+import com.example.bitmapfun.util.ImageCache;
+import com.example.bitmapfun.util.ImageFetcher;
+import com.example.bitmapfun.util.Utils;
 
-@SuppressLint("ValidFragment")
-public class ImageDetailActivity extends FragmentActivity {
-	private DiskLruImageCache mDiskLruCache;
-	public static final String LOG_TAG = "ImageDetailActivity";
-	private LruCache<String, Bitmap> mMemoryCache;
-	private boolean mDiskCacheStarting = true;
-	private static final int DISK_CACHE_SIZE = 1024 * 1024 * 10; // 10MB
-	private static final String DISK_CACHE_SUBDIR = "IDA_thumbnails";
-	private static final int IMG_W = 500;
-	private static final int IMG_H = 500;
+public class ImageDetailActivity extends FragmentActivity implements OnClickListener {
+    private static final String IMAGE_CACHE_DIR = "images";
+    public static final String EXTRA_IMAGE = "extra_image";
 
-	private final Object mDiskCacheLock = new Object();
+    private ImagePagerAdapter mAdapter;
+    private ImageFetcher mImageFetcher;
+    private ViewPager mPager;
 
-	private static final File imagesDirectory = Storage.getImagesDirectory();
-	public static final String EXTRA_IMAGE = null;
+    @TargetApi(11)
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        if (BuildConfig.DEBUG) {
+            Utils.enableStrictMode();
+        }
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.image_detail_pager);
 
-	// Get max available VM memory, exceeding this amount will throw an
-	// OutOfMemory exception. Stored in kilobytes as LruCache takes an
-	// int in its constructor.
-	final int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
+        // Fetch screen height and width, to use as our max size when loading images as this
+        // activity runs full screen
+        final DisplayMetrics displayMetrics = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+        final int height = displayMetrics.heightPixels;
+        final int width = displayMetrics.widthPixels;
 
-	// Use 1/8th of the available memory for this memory cache.
-	final int cacheSize = maxMemory / 8;
+        // For this sample we'll use half of the longest width to resize our images. As the
+        // image scaling ensures the image is larger than this, we should be left with a
+        // resolution that is appropriate for both portrait and landscape. For best image quality
+        // we shouldn't divide by 2, but this will use more memory and require a larger memory
+        // cache.
+        final int longest = (height > width ? height : width) / 2;
 
+        ImageCache.ImageCacheParams cacheParams =
+                new ImageCache.ImageCacheParams(this, IMAGE_CACHE_DIR);
+        cacheParams.setMemCacheSizePercent(0.25f); // Set memory cache to 25% of app memory
 
-	private ImagePagerAdapter mAdapter;
-	private ViewPager mPager;
+        // The ImageFetcher takes care of loading images into our ImageView children asynchronously
+        mImageFetcher = new ImageFetcher(this, longest);
+        mImageFetcher.addImageCache(getSupportFragmentManager(), cacheParams);
+        mImageFetcher.setImageFadeIn(false);
 
-	public void loadBitmap(File path, ImageView mImageView) {
-		final String key = path.getName();
+        // Set up ViewPager and backing adapter
+        mAdapter = new ImagePagerAdapter(getSupportFragmentManager(), Images.imageUrls.length);
+        mPager = (ViewPager) findViewById(R.id.pager);
+        mPager.setAdapter(mAdapter);
+        mPager.setPageMargin((int) getResources().getDimension(R.dimen.image_detail_pager_margin));
+        mPager.setOffscreenPageLimit(2);
 
-		final Bitmap bitmap = mMemoryCache.get(key);
-		if (bitmap != null)
-			mImageView.setImageBitmap(bitmap);
-		else {
-			mImageView.setImageResource(R.drawable.image_placeholder);
-			BitmapWorkerTask task = new BitmapWorkerTask(mImageView);
-			task.execute(path);
-		}
-	}
+        // Set up activity to go full screen
+        getWindow().addFlags(LayoutParams.FLAG_FULLSCREEN);
 
-	public void addBitmapToMemoryCache(String key, Bitmap bitmap) {
-		if (mMemoryCache.get(key) == null) {
-			mMemoryCache.put(key, bitmap);
-		}
-	}
+        // Enable some additional newer visibility and ActionBar features to create a more
+        // immersive photo viewing experience
+        if (Utils.hasHoneycomb()) {
+            final ActionBar actionBar = getActionBar();
+            
+            if(actionBar!=null){
 
-	private static BitmapWorkerTask getBitmapWorkerTask(ImageView imageView) {
-		if (imageView != null) {
-			final Drawable drawable = imageView.getDrawable();
-			if (drawable instanceof AsyncDrawable) {
-				final AsyncDrawable asyncDrawable = (AsyncDrawable) drawable;
-				return asyncDrawable.getBitmapWorkerTask();
-			}
-		}
-		return null;
-	}
+            // Hide title text and set home as up
+            actionBar.setDisplayShowTitleEnabled(false);
+            actionBar.setDisplayHomeAsUpEnabled(true);
 
-	@Override
-	public void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		
-		try {
-			RetainFragment mRetainFragment = RetainFragment
-					.findOrCreateRetainFragment(getFragmentManager());
-			mMemoryCache = RetainFragment.mRetainedCache;
+            // Hide and show the ActionBar as the visibility changes
+            mPager.setOnSystemUiVisibilityChangeListener(
+                    new View.OnSystemUiVisibilityChangeListener() {
+                        @Override
+                        public void onSystemUiVisibilityChange(int vis) {
+                            if ((vis & View.SYSTEM_UI_FLAG_LOW_PROFILE) != 0) {
+                                actionBar.hide();
+                            } else {
+                                actionBar.show();
+                            }
+                        }
+                    });
 
-			if (mMemoryCache == null) {
-				mMemoryCache = new LruCache<String, Bitmap>(cacheSize) {
-					@Override
-					protected int sizeOf(String key, Bitmap bitmap) {
-						return bitmap.getByteCount() / 1024;
-					}
+            // Start low profile mode and hide ActionBar
+            mPager.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE);
+            actionBar.hide();
+            }
+        }
 
-				};
-				mRetainFragment.mRetainedCache = mMemoryCache;
-			}
-		} catch (Exception e) {
-			Log.w(LOG_TAG,"old target");
+        // Set the current item based on the extra passed in to this activity
+        final int extraCurrentItem = getIntent().getIntExtra(EXTRA_IMAGE, -1);
+        if (extraCurrentItem != -1) {
+            mPager.setCurrentItem(extraCurrentItem);
+        }
+    }
 
-			mMemoryCache = new LruCache<String, Bitmap>(cacheSize) {/* INITIALIZE MEMORY CACHE */
-				@Override
-				protected int sizeOf(String key, Bitmap bitmap) {
-					return bitmap.getByteCount() / 1024;
-				}
-			};
-		} 
-		/* INITIALIZE DISK CACHE */
-		File cacheDir = Storage.getDiskCacheDir(DISK_CACHE_SUBDIR);
-		new InitDiskCacheTask().execute(cacheDir);
+    @Override
+    public void onResume() {
+        super.onResume();
+        mImageFetcher.setExitTasksEarly(false);
+    }
 
-		setContentView(R.layout.image_detail_pager); // Contains just a
-														// ViewPager
+    @Override
+    protected void onPause() {
+        super.onPause();
+        mImageFetcher.setExitTasksEarly(true);
+        mImageFetcher.flushCache();
+    }
 
-		mAdapter = new ImagePagerAdapter(getSupportFragmentManager());
-		mPager = (ViewPager) findViewById(R.id.pager);
-		mPager.setAdapter(mAdapter);
-	}
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        mImageFetcher.closeCache();
+    }
 
-	public static class ImagePagerAdapter extends FragmentStatePagerAdapter {
-		public static File[] fileList;
-		private final int mSize;
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                NavUtils.navigateUpFromSameTask(this);
+                return true;
+            case R.id.clear_cache:
+                mImageFetcher.clearCache();
+                Toast.makeText(
+                        this, R.string.clear_cache_complete_toast,Toast.LENGTH_SHORT).show();
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
 
-		public ImagePagerAdapter(
-				android.support.v4.app.FragmentManager fragmentManager) {
-			super(fragmentManager);
-			
-			
-			fileList = Storage.getFilesList(imagesDirectory);
-			mSize = fileList.length;
-		
-		}
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
 
-		@Override
-		public int getCount() {
-			return mSize;
-		}
+    /**
+     * Called by the ViewPager child fragments to load images via the one ImageFetcher
+     */
+    public ImageFetcher getImageFetcher() {
+        return mImageFetcher;
+    }
 
-		@Override
-		public android.support.v4.app.Fragment getItem(int position) {
-			return ImageDetailFragment.newInstance(position);
-		}
-	}
+    /**
+     * The main adapter that backs the ViewPager. A subclass of FragmentStatePagerAdapter as there
+     * could be a large number of items in the ViewPager and we don't want to retain them all in
+     * memory at once but create/destroy them on the fly.
+     */
+    private class ImagePagerAdapter extends FragmentStatePagerAdapter {
+        private final int mSize;
 
-	static class AsyncDrawable extends BitmapDrawable {
-		private final WeakReference<BitmapWorkerTask> bitmapWorkerTaskReference;
+        public ImagePagerAdapter(FragmentManager fm, int size) {
+            super(fm);
+            mSize = size;
+        }
 
-		public AsyncDrawable(Resources res, Bitmap bitmap,
-				BitmapWorkerTask bitmapWorkerTask) {
-			super(res, bitmap);
-			bitmapWorkerTaskReference = new WeakReference<BitmapWorkerTask>(
-					bitmapWorkerTask);
-		}
+        @Override
+        public int getCount() {
+            return mSize;
+        }
 
-		public BitmapWorkerTask getBitmapWorkerTask() {
-			return bitmapWorkerTaskReference.get();
-		}
-	}
+        @Override
+        public Fragment getItem(int position) {
+            return ImageDetailFragment.newInstance(Images.imageUrls[position]);
+        }
+    }
 
-	class BitmapWorkerTask extends AsyncTask<File, Void, Bitmap> {
-		private final WeakReference<ImageView> imageViewReference;
-		private File file;
-
-		public BitmapWorkerTask(ImageView imageView) {
-			// Use a WeakReference to ensure the ImageView can be garbage
-			// collected
-			imageViewReference = new WeakReference<ImageView>(imageView);
-		}
-
-		// Decode image in background.
-		@Override
-		protected Bitmap doInBackground(File... params) {
-			file = params[0];
-			final String imageKey = file.getName();
-
-			// Check disk cache in background thread
-			Bitmap bitmap = getBitmapFromDiskCache(imageKey);
-			if (bitmap == null) { // Not found in disk cache
-				bitmap = BitmapCalc.decodeSampleBitmapFromFile(
-						file.getAbsolutePath(), IMG_W, IMG_H);
-			}
-			// add final bitmap to caches
-			addBitmapToCache(imageKey, bitmap);
-			return bitmap;
-		}
-
-		public void addBitmapToCache(String key, Bitmap bitmap) {
-			// Add to memory cache as before
-			if (mMemoryCache.get(key) == null) {
-				mMemoryCache.put(key, bitmap);
-			}
-
-			// Also add to disk cache
-			synchronized (mDiskCacheLock) {
-				if (mDiskLruCache != null
-						&& mDiskLruCache.getBitmap(key) == null) {
-					mDiskLruCache.put(key, bitmap);
-				}
-			}
-		}
-
-		public Bitmap getBitmapFromDiskCache(String key) {
-			synchronized (mDiskCacheLock) {
-				// Wait while disk cache is started from background thread
-				while (mDiskCacheStarting) {
-					try {
-						mDiskCacheLock.wait();
-					} catch (InterruptedException e) {
-					}
-				}
-				if (mDiskLruCache != null) {
-					return mDiskLruCache.getBitmap(key);
-				}
-			}
-			return null;
-		}
-
-		// Once complete, see if ImageView is still around and set bitmap.
-		@Override
-		protected void onPostExecute(Bitmap bitmap) {
-			if (isCancelled()) {
-				bitmap = null;
-			}
-
-			if (imageViewReference != null && bitmap != null) {
-				final ImageView imageView = imageViewReference.get();
-				final BitmapWorkerTask bitmapWorkerTask = getBitmapWorkerTask(imageView);
-				if (/* this == bitmapWorkerTask && */imageView != null) {
-					imageView.setImageBitmap(bitmap);
-				}
-			}
-		}
-	}
-
-	class InitDiskCacheTask extends AsyncTask<File, Void, Void> {
-		@Override
-		protected Void doInBackground(File... params) {
-			synchronized (mDiskCacheLock) {
-				File cacheDir = params[0];
-				mDiskLruCache = new DiskLruImageCache(cacheDir,
-						DISK_CACHE_SIZE, CompressFormat.JPEG, 100);
-				mDiskCacheStarting = false; // Finished initialization
-				mDiskCacheLock.notifyAll(); // Wake any waiting threads
-			}
-			return null;
-		}
-	}
-
-	@TargetApi(Build.VERSION_CODES.HONEYCOMB)
-	static class RetainFragment extends Fragment {
-		private static final String TAG = "RetainFragment";
-		public static LruCache<String, Bitmap> mRetainedCache;
-
-		public RetainFragment() {
-		}
-
-		public static RetainFragment findOrCreateRetainFragment(
-				FragmentManager fm) {
-			RetainFragment fragment = (RetainFragment) fm
-					.findFragmentByTag(TAG);
-			if (fragment == null) {
-				fragment = new RetainFragment();
-			}
-			return fragment;
-		}
-
-		@Override
-		public void onCreate(Bundle savedInstanceState) {
-			super.onCreate(savedInstanceState);
-			setRetainInstance(true);
-		}
-
-	}
+    /**
+     * Set on the ImageView in the ViewPager children fragments, to enable/disable low profile mode
+     * when the ImageView is touched.
+     */
+    @TargetApi(11)
+    @Override
+    public void onClick(View v) {
+        final int vis = mPager.getSystemUiVisibility();
+        if ((vis & View.SYSTEM_UI_FLAG_LOW_PROFILE) != 0) {
+            mPager.setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
+        } else {
+            mPager.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE);
+        }
+    }
 }
